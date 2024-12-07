@@ -184,5 +184,42 @@ if st.button('Analyze') and user_input and client:
         pdf_quiz_content = generate_pdf(quiz_df.to_string(), "Quiz Questions")
         st.download_button("Download Quiz as PDF", data=pdf_quiz_content, file_name="quiz.pdf", mime="application/pdf")
 
+        # Visualization Tabs
+        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+
+        with tab1:
+            st.markdown("## Word Cloud 🌥️")
+            st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
+            key_phrases_text = ' '.join(st.session_state.key_phrases)
+
+            if key_phrases_text.strip():
+                wordcloud = WordCloud(
+                    width=800, height=400,
+                    background_color="white", 
+                    colormap="viridis"
+                ).generate(key_phrases_text)
+
+                plt.imshow(wordcloud, interpolation='bilinear')
+                plt.axis("off")
+                st.pyplot(plt.gcf())
+            else:
+                st.warning("No key phrases were extracted for the word cloud.")
+
+        with tab2:
+            st.markdown("## Pie Chart 📊")
+            st.markdown("The pie chart visually represents the relative importance of each key point based on its presence and significance in the text.")
+            if not key_points_df.empty:
+                pie_labels = key_points_df['Key Points']
+                pie_sizes = [len(k) for k in key_points_df['Explanation']]
+                if sum(pie_sizes) > 0:
+                    fig, ax = plt.subplots()
+                    ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+                    ax.axis('equal')
+                    st.pyplot(fig)
+                else:
+                    st.warning("No valid data available to generate the pie chart.")
+            else:
+                st.warning("No key points available to generate the pie chart.")
+
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
