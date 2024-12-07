@@ -109,15 +109,18 @@ if st.button('Analyze') and user_input and client:
     with st.spinner("Analyzing text..."):
         ai_response = get_ai_response(prompt, user_input)
 
-    st.write("AI Response: ", ai_response)
-
     try:
+        # Ensure the AI response is valid JSON
         response_data = json.loads(ai_response)
-        
-        key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
-        quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
-        summary = response_data.get('Summary', "Summary not provided")
 
+        # Fallback data for missing sections
+        summary = response_data.get('Summary', "Summary not provided.")
+        key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
+        key_phrases = response_data.get('Key Phrases', ["No key phrases extracted."])
+        pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
+        quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
+
+        # Summary
         st.markdown("## Summary of Text 📝")
         st.markdown("This section provides a detailed summary of the text. It condenses the most important information so you can grasp the key concepts at a glance.")
         st.write(summary)
@@ -125,6 +128,7 @@ if st.button('Analyze') and user_input and client:
         pdf_content = generate_pdf(summary)
         st.download_button("Download Summary as PDF", data=pdf_content, file_name="summary.pdf", mime="application/pdf")
 
+        # Key Points
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
@@ -133,28 +137,27 @@ if st.button('Analyze') and user_input and client:
         st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
         st.dataframe(key_points_df)
 
-        if st.button("Regenerate Quiz"):
-            st.success("Quiz regenerated successfully!")
-
+        # Quiz
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
         st.dataframe(quiz_df)
 
+        # Visualization Tabs
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
 
         with tab1:
             st.markdown("## Word Cloud 🌥️")
             st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
-            key_phrases = ' '.join(key_points_df['Key Points'].tolist())
+            key_phrases_text = ' '.join(key_phrases)
 
-            if key_phrases.strip():
+            if key_phrases_text.strip():
                 wordcloud = WordCloud(
                     width=800, height=400,
                     background_color="white", 
                     colormap="viridis"
-                ).generate(key_phrases)
+                ).generate(key_phrases_text)
 
                 plt.imshow(wordcloud, interpolation='bilinear')
                 plt.axis("off")
@@ -178,6 +181,7 @@ if st.button('Analyze') and user_input and client:
             else:
                 st.warning("No key points available to generate the pie chart.")
 
+        # CSV Downloads
         csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="Download Summary as CSV",
