@@ -68,6 +68,17 @@ def create_zip(summary, key_points_df, quiz_df, pie_chart_img, wordcloud_img):
     return zip_buffer.read()
 
 # Text input area
+st.markdown("# AI Powered Study Assistant 🚀")
+st.markdown("""
+    This app helps you analyze and summarize text to help with your study materials. 
+    It provides:
+    - A concise summary of the text.
+    - Key points extracted from the content.
+    - Quiz questions for self-assessment.
+    - Visualizations such as word clouds and pie charts to represent important concepts.
+    
+    The output is always in **English**, regardless of the input language.
+""")
 st.markdown("## Text Input 📝")
 st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
 user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
@@ -211,5 +222,38 @@ if st.button('Analyze') and user_input and client:
             mime="application/zip"
         )
 
+        # Tabs for WordCloud and PieChart
+        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+
+        with tab1:
+            st.markdown("## Word Cloud 🌥️")
+            st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
+            key_phrases_text = ' '.join(st.session_state.key_phrases)
+
+            if key_phrases_text.strip():
+                wordcloud = WordCloud(
+                    width=800, height=400,
+                    background_color="white", 
+                    colormap="viridis"
+                ).generate(key_phrases_text)
+
+                plt.imshow(wordcloud, interpolation='bilinear')
+                plt.axis("off")
+                st.pyplot(plt.gcf())
+            else:
+                st.warning("No key phrases were extracted for the word cloud.")
+
+        with tab2:
+            st.markdown("## Pie Chart 📊")
+            st.markdown("The pie chart visually represents the relative importance of each key point based on its presence and significance in the text.")
+            if not key_points_df.empty:
+                pie_labels = key_points_df['Key Points']
+                pie_sizes = [len(k) for k in key_points_df['Explanation']]
+                fig, ax = plt.subplots()
+                ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90)
+                ax.axis('equal')
+                st.pyplot(fig)
+
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
