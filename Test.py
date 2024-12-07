@@ -13,7 +13,6 @@ if user_api_key:
 else:
     client = None
 
-@st.cache_data(suppress_st_warning=True, show_spinner=True, ttl=3600)
 def get_ai_response(prompt, user_input):
     messages = [
         {"role": "system", "content": prompt},
