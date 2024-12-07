@@ -38,7 +38,7 @@ def generate_pdf(content):
     return pdf.output(dest="S").encode('latin1')
 
 # Slider for selecting detail retention level
-detail_level = st.slider("Select level of detail to retain", min_value=50, max_value=100, step=25, value=75)
+detail_level = st.slider("Select level of detail to retain", min_value=40, max_value=100, step=10, value=70)
 
 # New header with explanation
 st.markdown("""
