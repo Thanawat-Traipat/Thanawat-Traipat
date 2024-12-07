@@ -24,10 +24,12 @@ def get_ai_response(prompt, user_input):
     )
     return response.choices[0].message.content
 
-def generate_pdf(content):
+def generate_pdf(content, title):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=title, ln=True, align='C')
+    pdf.ln(10)  # Line break
     for line in content.split('\n'):
         pdf.cell(200, 10, txt=line, ln=True)
     return pdf.output(dest="S").encode('latin1')
@@ -38,10 +40,11 @@ st.markdown("""
 This application helps you analyze and summarize text, making it easy to study key points and prepare for exams.
 
 ### What the app does:
-1. **Summarizes text**: Provides a concise summary of any text.
-2. **Extracts key points**: Highlights the main ideas and gives explanations for each.
+1. **Summarizes text**: Provides a concise summary of any text, no matter the language.
+2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
 3. **Visualizes data**: Creates word clouds and pie charts to show important information at a glance.
 4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
+5. **Multilingual Input, English Output**: Input any text in any language, and the app will provide the output **in English**.
 
 Simply input your text, and the AI will do the rest!
 """)
@@ -61,7 +64,7 @@ detail_level = st.slider(
     help="Select how much detail you want to retain in the summary and quiz."
 )
 
-# AI prompt that changes based on the slider value
+# AI prompt that changes based on slider value
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in English, and you need to complete the following tasks:
 
@@ -137,7 +140,7 @@ if st.button('Analyze') and user_input and client:
         st.markdown("This section provides a detailed summary of the text. It condenses the most important information so you can grasp the key concepts at a glance.")
         st.write(summary)
 
-        pdf_content = generate_pdf(summary)
+        pdf_content = generate_pdf(summary, "Summary")
         st.download_button("Download Summary as PDF", data=pdf_content, file_name="summary.pdf", mime="application/pdf")
 
         # Key Points
@@ -150,12 +153,33 @@ if st.button('Analyze') and user_input and client:
         st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
         st.dataframe(key_points_df)
 
+        # Key Points CSV Download
+        csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download full table (CSV)",
+            data=csv_summary,
+            file_name="summary.csv",
+            mime="text/csv"
+        )
+
         # Quiz
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
         st.dataframe(quiz_df)
+
+        # Quiz CSV Download
+        csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download full table (CSV)",
+            data=csv_quiz,
+            file_name="quiz.csv",
+            mime="text/csv"
+        )
+
+        pdf_quiz_content = generate_pdf(quiz_df.to_string(), "Quiz Questions")
+        st.download_button("Download Quiz as PDF", data=pdf_quiz_content, file_name="quiz.pdf", mime="application/pdf")
 
         # Visualization Tabs
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
@@ -193,23 +217,6 @@ if st.button('Analyze') and user_input and client:
                     st.warning("No valid data available to generate the pie chart.")
             else:
                 st.warning("No key points available to generate the pie chart.")
-
-        # CSV Downloads
-        csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download Summary as CSV",
-            data=csv_summary,
-            file_name="summary.csv",
-            mime="text/csv"
-        )
-
-        csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download Quiz as CSV",
-            data=csv_quiz,
-            file_name="quiz.csv",
-            mime="text/csv"
-        )
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
