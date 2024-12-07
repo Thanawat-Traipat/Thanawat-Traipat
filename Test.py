@@ -27,12 +27,18 @@ def get_ai_response(prompt, user_input):
 def generate_pdf(content, title):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
+    
+    # Set a basic font (Arial is a default Latin font supported by FPDF)
+    pdf.set_font("Arial", size=12)  # No need for custom Unicode fonts
+    
     pdf.cell(200, 10, txt=title, ln=True, align='C')
     pdf.ln(10)  # Line break
+
+    # Add the content to the PDF (English text)
     for line in content.split('\n'):
         pdf.cell(200, 10, txt=line, ln=True)
-    return pdf.output(dest="S").encode('latin1')
+
+    return pdf.output(dest="S").encode('latin1')  # Default encoding for PDF download
 
 st.markdown("""
 # AI-Powered Study Assistant 🌟
@@ -44,7 +50,7 @@ This application helps you analyze and summarize text, making it easy to study k
 2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
 3. **Visualizes data**: Creates word clouds and pie charts to show important information at a glance.
 4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
-5. **Multilingual Input, English Output**: Input any text in any language, and the app will provide the output **in English**.
+5. **Multilingual Input, English Output**: Input any text in any language (e.g., Thai, Japanese, Spanish, etc.), and the app will provide the output **in English**.
 
 Simply input your text, and the AI will do the rest!
 """)
@@ -66,7 +72,7 @@ detail_level = st.slider(
 
 # AI prompt that changes based on slider value
 prompt = f"""
-You are acting as a Private Tutor for the student. You will be given a text in English, and you need to complete the following tasks:
+You are acting as a Private Tutor for the student. You will be given a text in any language, but you need to always respond in **English**. Complete the following tasks:
 
 Step 1: Summarize the Text (retain {detail_level}%).
 - If the detail level is high (e.g., > 70%), provide a detailed summary with thorough explanations and insights.
@@ -220,3 +226,4 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
