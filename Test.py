@@ -13,7 +13,7 @@ if user_api_key:
 else:
     client = None
 
-@st.cache(suppress_st_warning=True, show_spinner=True, ttl=3600)
+@st.cache_data(suppress_st_warning=True, show_spinner=True, ttl=3600)
 def get_ai_response(prompt, user_input):
     messages = [
         {"role": "system", "content": prompt},
@@ -110,7 +110,7 @@ if st.button('Analyze') and user_input and client:
     with st.spinner("Analyzing text..."):
         ai_response = get_ai_response(prompt, user_input)
 
-    st.write("AI Response: ", ai_response)  # Debugging output
+    st.write("AI Response: ", ai_response)
 
     try:
         response_data = json.loads(ai_response)
