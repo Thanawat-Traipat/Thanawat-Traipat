@@ -14,9 +14,10 @@ if user_api_key:
 else:
     client = None
 
-# Prompt for OpenAI AI
-prompt = """Act as a Private Tutor for the student. You will be given a text,
-            and you need to complete the following tasks in a structured, step-by-step manner:
+# Adjusted prompt for language flexibility (output same as input language)
+prompt = """Act as a Private Tutor for the student. You will be given a text in any language,
+            and you need to complete the following tasks in a structured, step-by-step manner. 
+            Make sure to provide the responses in the same language as the input:
 
             Step 1: Summarize the Text
             - Provide a brief summary of the entire text.
@@ -109,12 +110,16 @@ if st.button('Analyze') and user_input and client:
                 key_points_df = key_points_df[['Title/Main Idea', 'Explanation']] 
                 key_points_df.columns = ['Key Points', 'Explanation']
 
+                # Adjust index to start from 1
+                key_points_df.index = key_points_df.index + 1
+
                 # Display Key Points and Explanation
                 st.subheader("Key Points")
                 st.dataframe(key_points_df)
 
                 # Display Quiz
                 quiz_df = pd.DataFrame(quiz)
+                quiz_df.index = quiz_df.index + 1  # Start quiz table index from 1
                 st.subheader("Quiz Questions")
                 st.dataframe(quiz_df)
 
