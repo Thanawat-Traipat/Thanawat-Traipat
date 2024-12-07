@@ -40,21 +40,6 @@ def generate_pdf(content, title):
 
     return pdf.output(dest="S").encode('latin1')  # Default encoding for PDF download
 
-st.markdown("""
-# AI-Powered Study Assistant 🌟
-
-This application helps you analyze and summarize text, making it easy to study key points and prepare for exams.
-
-### What the app does:
-1. **Summarizes text**: Provides a concise summary of any text, no matter the language.
-2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
-3. **Visualizes data**: Creates word clouds and pie charts to show important information at a glance.
-4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
-5. **Multilingual Input, English Output**: Input any text in any language (e.g., Thai, Japanese, Spanish, etc.), and the app will provide the output **in English**.
-
-Simply input your text, and the AI will do the rest!
-""")
-
 # Text input area
 st.markdown("## Text Input 📝")
 st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
@@ -126,6 +111,7 @@ if not user_api_key:
 if not user_input:
     st.warning("Please provide some text to analyze.")
 
+# Store results in session state
 if st.button('Analyze') and user_input and client:
     with st.spinner("Analyzing text..."):
         ai_response = get_ai_response(prompt, user_input)
@@ -141,16 +127,23 @@ if st.button('Analyze') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        # Summary
+        # Save the data in session_state
+        st.session_state.summary = summary
+        st.session_state.key_points = key_points
+        st.session_state.key_phrases = key_phrases
+        st.session_state.pie_chart_data = pie_chart_data
+        st.session_state.quiz = quiz
+
+        # Display the Summary
         st.markdown("## Summary of Text 📝")
         st.markdown("This section provides a detailed summary of the text. It condenses the most important information so you can grasp the key concepts at a glance.")
-        st.write(summary)
+        st.write(st.session_state.summary)
 
-        pdf_content = generate_pdf(summary, "Summary")
+        pdf_content = generate_pdf(st.session_state.summary, "Summary")
         st.download_button("Download Summary as PDF", data=pdf_content, file_name="summary.pdf", mime="application/pdf")
 
-        # Key Points
-        key_points_df = pd.DataFrame(key_points)
+        # Display Key Points
+        key_points_df = pd.DataFrame(st.session_state.key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
@@ -168,8 +161,12 @@ if st.button('Analyze') and user_input and client:
             mime="text/csv"
         )
 
-        # Quiz
-        quiz_df = pd.DataFrame(quiz)
+        # Key Points PDF Download
+        key_points_pdf_content = generate_pdf(key_points_df.to_string(), "Key Points and Explanations")
+        st.download_button("Download Key Points as PDF", data=key_points_pdf_content, file_name="key_points.pdf", mime="application/pdf")
+
+        # Display Quiz
+        quiz_df = pd.DataFrame(st.session_state.quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
@@ -187,43 +184,5 @@ if st.button('Analyze') and user_input and client:
         pdf_quiz_content = generate_pdf(quiz_df.to_string(), "Quiz Questions")
         st.download_button("Download Quiz as PDF", data=pdf_quiz_content, file_name="quiz.pdf", mime="application/pdf")
 
-        # Visualization Tabs
-        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
-
-        with tab1:
-            st.markdown("## Word Cloud 🌥️")
-            st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
-            key_phrases_text = ' '.join(key_phrases)
-
-            if key_phrases_text.strip():
-                wordcloud = WordCloud(
-                    width=800, height=400,
-                    background_color="white", 
-                    colormap="viridis"
-                ).generate(key_phrases_text)
-
-                plt.imshow(wordcloud, interpolation='bilinear')
-                plt.axis("off")
-                st.pyplot(plt.gcf())
-            else:
-                st.warning("No key phrases were extracted for the word cloud.")
-
-        with tab2:
-            st.markdown("## Pie Chart 📊")
-            st.markdown("The pie chart visually represents the relative importance of each key point based on its presence and significance in the text.")
-            if not key_points_df.empty:
-                pie_labels = key_points_df['Key Points']
-                pie_sizes = [len(k) for k in key_points_df['Explanation']]
-                if sum(pie_sizes) > 0:
-                    fig, ax = plt.subplots()
-                    ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
-                    ax.axis('equal')
-                    st.pyplot(fig)
-                else:
-                    st.warning("No valid data available to generate the pie chart.")
-            else:
-                st.warning("No key points available to generate the pie chart.")
-
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
