@@ -137,7 +137,7 @@ if st.button('Analyze') and user_input and client:
 
         # Styling the DataFrame
         styled_df = key_points_df.style.set_properties(
-            **{'width': '250px', 'text-align': 'center'}
+            **{'width': '350px', 'text-align': 'center'}  # Increased width
         ).set_table_styles(
             [
                 {'selector': 'thead th', 'props': [('background-color', '#f5f5f5'), ('font-weight', 'bold')]}, 
