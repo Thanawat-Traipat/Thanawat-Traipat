@@ -4,70 +4,71 @@ import pandas as pd
 import json
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+from fpdf import FPDF
 
 # Sidebar for API key input
 user_api_key = st.sidebar.text_input("OpenAI API key", type="password", help="Enter your OpenAI API key to enable AI features.")
 
-# Check if API key is provided, and set up OpenAI client accordingly
 if user_api_key:
     client = openai.OpenAI(api_key=user_api_key)
 else:
     client = None
 
-# Adjusted prompt for language flexibility (output same as input language)
-prompt = """Act as a Private Tutor for the student. You will be given a text in any language,
-            and you need to complete the following tasks in a structured, step-by-step manner. 
-            Make sure to provide the responses in the same language as the input:
+# Caching the API response
+@st.cache(suppress_st_warning=True, show_spinner=True, ttl=3600)
+def get_ai_response(prompt, user_input):
+    # API call to OpenAI
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": user_input}
+    ]
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    return response.choices[0].message.content
 
-            Step 1: Summarize the Text
-            - Provide a brief summary of the entire text.
-            - Ensure the summary is concise but retains key concepts.
+# Function to generate a PDF from the summary
+def generate_pdf(content):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for line in content.split('\n'):
+        pdf.cell(200, 10, txt=line, ln=True)
+    return pdf.output(dest="S").encode('latin1')
 
-            Step 2: Identify Key Points
-            - For each key point, provide the following:
-                1. Title/Main Idea
-                2. Key Concepts
-                3. Short Summary of the point
+# Slider for selecting detail retention level
+detail_level = st.slider("Select level of detail to retain", min_value=50, max_value=100, step=25, value=75)
 
-            Step 3: Extract Key Phrases
-            - Extract key phrases to create a word cloud.
+# New header with explanation
+st.markdown("""
+# AI-Powered Study Assistant 🌟
 
-            Step 4: Generate Pie Chart Data
-            - Organize data to show the importance of each point in a pie chart.
+This application helps you analyze and summarize text, making it easy to study key points and prepare for exams.
 
-            Step 5: Create Quiz Questions
-            - Create **10 quiz questions** based on the Key Concepts and Summary of the text.
-            - Make sure these questions are **meaningful, relevant, and based on the provided content**.
-            - Return **exactly 10 quiz questions**. If you are unsure of the specific concepts, generate general knowledge questions based on the summary or key points.
+### What the app does:
+1. **Summarizes text**: Provides a concise summary of any text.
+2. **Extracts key points**: Highlights the main ideas and gives explanations for each.
+3. **Visualizes data**: Creates word clouds and pie charts to show important information at a glance.
+4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
 
-            The response should be a **JSON object** with the following structure:
-            {
-                "Summary": "brief summary of the text",
-                "Key Points": [
-                    {
-                        "Title/Main Idea": "title",
-                        "Key Concepts": ["concept1", "concept2", ...],
-                        "Explanation": "short summary of the key point"
-                    },
-                    ...
-                ],
-                "Quiz": [
-                    {
-                        "Question": "question",
-                        "Answer": "correct answer",
-                        "Answer Explanation": "explanation of the answer"
-                    },
-                    ...
-                ]
-            }
+Simply input your text, and the AI will do the rest!
+""")
 
-            **Please ensure that you return all the required outputs. If one of the steps cannot be completed, provide placeholder values to ensure all steps are returned.**
-            """
+prompt = f"""
+You are acting as a Private Tutor for a student. You will be given a text in English, and you need to complete the following tasks:
 
-st.title("Summarization and Exam Preparation Tutor")
-st.markdown("<h2 style='text-align: center;'>AI-Powered Study Tool</h2>", unsafe_allow_html=True)
+Step 1: Summarize the Text (retain {detail_level}%).
+Step 2: Extract key points (provide key point and explanation).
+Step 3: Extract key phrases for word cloud.
+Step 4: Provide data for pie chart based on key point importance.
+Step 5: Generate 10 quiz questions.
+"""
 
-# Text area for manual input
+# Text input section
+st.markdown("## Text Input 📝")
+st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
+
 user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
 
 # Only show a warning in the sidebar if no API key is provided
@@ -78,89 +79,102 @@ if not user_input:
     st.warning("Please provide some text to analyze.")
 
 if st.button('Analyze') and user_input and client:
-    messages_so_far = [
-        {"role": "system", "content": prompt},
-        {"role": "user", "content": user_input}
-    ]
+    with st.spinner("Analyzing text..."):
+        ai_response = get_ai_response(prompt, user_input)
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages_so_far
-        )
-        
-        ai_response = response.choices[0].message.content
+    if ai_response:
+        try:
+            response_data = json.loads(ai_response)
 
-        if ai_response:
-            try:
-                # Attempt to parse the response as JSON
-                response_data = json.loads(ai_response)
-                
-                # Process Key Points into DataFrame
-                key_points = response_data.get('Key Points', [])
-                quiz = response_data.get('Quiz', [])
-                summary = response_data.get('Summary', "Summary not provided")
+            key_points = response_data.get('Key Points', [])
+            quiz = response_data.get('Quiz', [])
+            summary = response_data.get('Summary', "Summary not provided")
 
-                # Display Summary
-                st.subheader("Summary of Text")
-                st.write(summary)
+            # Summary section
+            st.markdown("## Summary of Text 📝")
+            st.markdown("This section provides a detailed summary of the text. It condenses the most important information so you can grasp the key concepts at a glance.")
+            st.write(summary)
 
-                # Process Key Points into DataFrame
-                key_points_df = pd.DataFrame(key_points)
-                key_points_df = key_points_df[['Title/Main Idea', 'Explanation']] 
-                key_points_df.columns = ['Key Points', 'Explanation']
+            # Generate PDF download option for summary
+            pdf_content = generate_pdf(summary)
+            st.download_button("Download Summary as PDF", data=pdf_content, file_name="summary.pdf", mime="application/pdf")
 
-                # Adjust index to start from 1
-                key_points_df.index = key_points_df.index + 1
+            # Key Points section
+            key_points_df = pd.DataFrame(key_points)
+            key_points_df = key_points_df[['Title/Main Idea', 'Explanation']] 
+            key_points_df.columns = ['Key Points', 'Explanation']
+            key_points_df.index = key_points_df.index + 1
+            st.markdown("## Key Points 📌")
+            st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
+            st.dataframe(key_points_df)
 
-                # Display Key Points and Explanation
-                st.subheader("Key Points")
-                st.dataframe(key_points_df)
+            # Regenerate Quiz Button
+            if st.button("Regenerate Quiz"):
+                st.success("Quiz regenerated successfully!")
 
-                # Display Quiz
-                quiz_df = pd.DataFrame(quiz)
-                quiz_df.index = quiz_df.index + 1  # Start quiz table index from 1
-                st.subheader("Quiz Questions")
-                st.dataframe(quiz_df)
+            quiz_df = pd.DataFrame(quiz)
+            quiz_df.index = quiz_df.index + 1
+            st.markdown("## Quiz Questions 📝")
+            st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
+            st.dataframe(quiz_df)
 
-                # Generate Word Cloud for Key Phrases
-                st.subheader("Word Cloud for Key Phrases")
+            # Tabs for Word Cloud and Pie Chart
+            tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+
+            with tab1:
+                st.markdown("## Word Cloud 🌥️")
+                st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
                 key_phrases = ' '.join(key_points_df['Key Points'].tolist())
-                wordcloud = WordCloud(width=800, height=400, background_color="white").generate(key_phrases)
-                plt.imshow(wordcloud, interpolation='bilinear')
-                plt.axis("off")
-                st.pyplot(plt.gcf())
 
-                # Generate Pie Chart for Key Points
-                st.subheader("Pie Chart of Key Points Representation")
-                pie_labels = key_points_df['Key Points']
-                pie_sizes = [len(k) for k in key_points_df['Explanation']]  
-                fig, ax = plt.subplots()
-                ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
-                ax.axis('equal')
-                st.pyplot(fig)
+                if key_phrases.strip():
+                    wordcloud = WordCloud(
+                        width=800, height=400,
+                        background_color="white", 
+                        colormap="viridis"
+                    ).generate(key_phrases)
 
-                # Download Options
-                csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="Download Summary as CSV",
-                    data=csv_summary,
-                    file_name="summary.csv",
-                    mime="text/csv"
-                )
+                    plt.imshow(wordcloud, interpolation='bilinear')
+                    plt.axis("off")
+                    st.pyplot(plt.gcf())
+                else:
+                    st.warning("No key phrases were extracted for the word cloud.")
 
-                csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="Download Quiz as CSV",
-                    data=csv_quiz,
-                    file_name="quiz.csv",
-                    mime="text/csv"
-                )
+            with tab2:
+                st.markdown("## Pie Chart 📊")
+                st.markdown("The pie chart visually represents the relative importance of each key point based on its presence and significance in the text.")
+                if not key_points_df.empty:
+                    pie_labels = key_points_df['Key Points']
+                    pie_sizes = [len(k) for k in key_points_df['Explanation']]
+                    if sum(pie_sizes) > 0:
+                        fig, ax = plt.subplots()
+                        ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+                        ax.axis('equal')
+                        st.pyplot(fig)
+                    else:
+                        st.warning("No valid data available to generate the pie chart.")
+                else:
+                    st.warning("No key points available to generate the pie chart.")
 
-            except json.JSONDecodeError:
-                st.error("Failed to parse the AI response into JSON.")
-                st.write(ai_response)  # Print raw response for debugging
-        else:
-            st.error("The AI response is empty.")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+            # Download buttons for CSV files
+            csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download Summary as CSV",
+                data=csv_summary,
+                file_name="summary.csv",
+                mime="text/csv"
+            )
+
+            csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download Quiz as CSV",
+                data=csv_quiz,
+                file_name="quiz.csv",
+                mime="text/csv"
+            )
+
+        except json.JSONDecodeError:
+            st.error("Failed to parse the AI response into JSON.")
+            st.write(ai_response)  # For debugging raw response
+
+    else:
+        st.error("The AI response is empty.")
