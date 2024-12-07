@@ -18,7 +18,7 @@ else:
                 Step 1: Summarize the Text
                 - Provide a brief summary of the entire text.
                 - Ensure the summary is concise but retains key concepts.
-                
+
                 Step 2: Identify Key Points
                 - For each key point, provide the following:
                     1. Title/Main Idea
@@ -32,9 +32,11 @@ else:
                 - Organize data to show the importance of each point in a pie chart.
 
                 Step 5: Create Quiz Questions
-                - Create 10 quiz questions based on the Key Concepts.
+                - Create **10 quiz questions** based on the Key Concepts and Summary of the text.
+                - Make sure these questions are **meaningful, relevant, and based on the provided content**.
+                - Return **exactly 10 quiz questions**. If you are unsure of the specific concepts, generate general knowledge questions based on the summary or key points.
 
-                The response should be a JSON object with the following structure:
+                The response should be a **JSON object** with the following structure:
                 {
                     "Summary": "brief summary of the text",
                     "Key Points": [
@@ -55,7 +57,7 @@ else:
                     ]
                 }
 
-                **Please ensure that even if there are no key points or quiz questions, you return the keys 'Key Points' and 'Quiz' with empty arrays.**
+                **Please ensure that you return all the required outputs. If one of the steps cannot be completed, provide placeholder values to ensure all steps are returned.**
                 """
 
     st.title("Summarization and Exam Preparation Tutor")
@@ -85,20 +87,26 @@ else:
                         # Attempt to parse the response as JSON
                         response_data = json.loads(ai_response)
                         
-                        # Ensure 'Key Points' and 'Quiz' exist and are not missing
+                        # Validate that all steps are present
+                        summary = response_data.get('Summary', "Summary not provided")
                         key_points = response_data.get('Key Points', [])
                         quiz = response_data.get('Quiz', [])
-                        summary = response_data.get('Summary', "No summary provided.")
+                        
+                        if not summary or not key_points or not quiz:
+                            st.error("One or more of the required steps are missing. Please check the input text.")
+                            return
 
-                        # If 'Key Points' or 'Quiz' are empty, we provide fallback empty values
+                        # Ensure the Key Points have proper structure
                         if not key_points:
                             key_points = [{"Title/Main Idea": "No Key Points", "Key Concepts": [], "Explanation": "No explanation"}]
-                        if not quiz:
-                            quiz = [{"Question": "No Questions", "Answer": "N/A", "Answer Explanation": "No explanation"}]
+
+                        # Ensure exactly 10 Quiz Questions are present
+                        if not quiz or len(quiz) < 10:
+                            st.error("The AI failed to generate exactly 10 quiz questions. Please ensure proper input.")
+                            return
 
                         # Process Key Points into DataFrame
                         key_points_df = pd.DataFrame(key_points)
-
                         key_points_df = key_points_df[['Title/Main Idea', 'Explanation']] 
                         key_points_df.columns = ['Key Points', 'Explanation']  
 
