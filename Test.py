@@ -33,6 +33,27 @@ else:
 
                 Step 5: Create Quiz Questions
                 - Create 10 quiz questions based on the Key Concepts.
+
+                The response should be a JSON object with the following structure:
+                {
+                    "Summary": "brief summary of the text",
+                    "Key Points": [
+                        {
+                            "Title/Main Idea": "title",
+                            "Key Concepts": ["concept1", "concept2", ...],
+                            "Explanation": "short summary of the key point"
+                        },
+                        ...
+                    ],
+                    "Quiz": [
+                        {
+                            "Question": "question",
+                            "Answer": "correct answer",
+                            "Answer Explanation": "explanation of the answer"
+                        },
+                        ...
+                    ]
+                }
                 """
 
     st.title('Summarization and Exam Preparation Tutor')
@@ -59,72 +80,82 @@ else:
                 st.markdown('**AI response:**')
                 ai_response = response.choices[0].message.content
                 
-                response_data = json.loads(ai_response)
+                st.write("Raw AI Response:")
+                st.write(ai_response)  # Show the raw response to debug
 
-                key_points_df = pd.DataFrame(response_data['Key Points'])
+                if ai_response:
+                    try:
+                        response_data = json.loads(ai_response)
+                    except json.JSONDecodeError:
+                        st.error("Failed to parse the AI response into JSON.")
+                        st.write(ai_response)  # Print raw response for debugging
+                    else:
+                        if 'Key Points' in response_data and 'Quiz' in response_data:
+                            key_points_df = pd.DataFrame(response_data['Key Points'])
 
-                key_points_df = key_points_df[['Title/Main Idea', 'Summary']] 
-                key_points_df.columns = ['Key Points', 'Explanation']  
+                            key_points_df = key_points_df[['Title/Main Idea', 'Explanation']] 
+                            key_points_df.columns = ['Key Points', 'Explanation']  
 
-                visualization_choice = st.radio("Choose Visualization:", ("Word Cloud", "Pie Chart"))
+                            visualization_choice = st.radio("Choose Visualization:", ("Word Cloud", "Pie Chart"))
 
-                if visualization_choice == "Word Cloud":
-                    st.subheader("Word Cloud for Key Phrases")
-                    key_phrases = ' '.join(key_points_df['Key Points'].tolist())
-                    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(key_phrases)
-                    plt.imshow(wordcloud, interpolation='bilinear')
-                    plt.axis("off")
-                    st.pyplot(plt.gcf())
+                            if visualization_choice == "Word Cloud":
+                                st.subheader("Word Cloud for Key Phrases")
+                                key_phrases = ' '.join(key_points_df['Key Points'].tolist())
+                                wordcloud = WordCloud(width=800, height=400, background_color="white").generate(key_phrases)
+                                plt.imshow(wordcloud, interpolation='bilinear')
+                                plt.axis("off")
+                                st.pyplot(plt.gcf())
 
-                elif visualization_choice == "Pie Chart":
-                    st.subheader("Pie Chart of Key Points Representation")
-                    pie_labels = key_points_df['Key Points']
-                    pie_sizes = [len(k) for k in key_points_df['Explanation']]
-                    fig, ax = plt.subplots()
-                    ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
-                    ax.axis('equal')
-                    st.pyplot(fig)
+                            elif visualization_choice == "Pie Chart":
+                                st.subheader("Pie Chart of Key Points Representation")
+                                pie_labels = key_points_df['Key Points']
+                                pie_sizes = [len(k) for k in key_points_df['Explanation']]  
+                                fig, ax = plt.subplots()
+                                ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+                                ax.axis('equal')
+                                st.pyplot(fig)
 
-                content_choice = st.radio("Choose Content:", ("Summary", "Quiz"))
+                            content_choice = st.radio("Choose Content:", ("Summary", "Quiz"))
 
-                if content_choice == "Summary":
-                    st.subheader("Summary of Text")
-                    st.dataframe(key_points_df)
+                            if content_choice == "Summary":
+                                st.subheader("Summary of Text")
+                                st.dataframe(key_points_df)
 
-                    csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="Download Summary as CSV",
-                        data=csv_summary,
-                        file_name="summary.csv",
-                        mime="text/csv"
-                    )
+                                csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
+                                st.download_button(
+                                    label="Download Summary as CSV",
+                                    data=csv_summary,
+                                    file_name="summary.csv",
+                                    mime="text/csv"
+                                )
 
-                elif content_choice == "Quiz":
-                    st.subheader("Quiz Questions")
-                    quiz_df = pd.DataFrame(response_data['Quiz'])
-                    st.dataframe(quiz_df)
+                            elif content_choice == "Quiz":
+                                st.subheader("Quiz Questions")
+                                quiz_df = pd.DataFrame(response_data['Quiz'])
+                                st.dataframe(quiz_df)
 
-                    csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="Download Quiz as CSV",
-                        data=csv_quiz,
-                        file_name="quiz.csv",
-                        mime="text/csv"
-                    )
+                                csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
+                                st.download_button(
+                                    label="Download Quiz as CSV",
+                                    data=csv_quiz,
+                                    file_name="quiz.csv",
+                                    mime="text/csv"
+                                )
 
-                    if st.checkbox("Show Answer Keys"):
-                        quiz_df["Answer Key"] = quiz_df["Answer Explanation"]
-                        st.dataframe(quiz_df)
+                                if st.checkbox("Show Answer Keys"):
+                                    quiz_df["Answer Key"] = quiz_df["Answer Explanation"]
+                                    st.dataframe(quiz_df)
 
-                        csv_quiz_with_answers = quiz_df.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label="Download Quiz with Answer Keys as CSV",
-                            data=csv_quiz_with_answers,
-                            file_name="quiz_with_answers.csv",
-                            mime="text/csv"
-                        )
+                                    csv_quiz_with_answers = quiz_df.to_csv(index=False).encode('utf-8')
+                                    st.download_button(
+                                        label="Download Quiz with Answer Keys as CSV",
+                                        data=csv_quiz_with_answers,
+                                        file_name="quiz_with_answers.csv",
+                                        mime="text/csv"
+                                    )
                         
             except json.JSONDecodeError:
                 st.error("The response from the AI couldn't be parsed into a table format.")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
