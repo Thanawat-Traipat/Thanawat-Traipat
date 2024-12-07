@@ -30,44 +30,34 @@ def generate_pdf(content, title):
     pdf = FPDF()
     pdf.add_page()
     
-    # Set a basic font (Arial is a default Latin font supported by FPDF)
-    pdf.set_font("Arial", size=12)  # No need for custom Unicode fonts
-    
+    pdf.set_font("Arial", size=12)  # Basic font, no Unicode needed
     pdf.cell(200, 10, txt=title, ln=True, align='C')
     pdf.ln(10)  # Line break
 
-    # Add the content to the PDF (English text)
     for line in content.split('\n'):
         pdf.cell(200, 10, txt=line, ln=True)
 
     return pdf.output(dest="S").encode('latin1')  # Default encoding for PDF download
 
 def create_zip(summary, key_points_df, quiz_df, pie_chart_img, wordcloud_img):
-    # Create an in-memory ZIP file
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-        # Add the Summary PDF
         summary_pdf = generate_pdf(summary, "Summary")
         zip_file.writestr("summary.pdf", summary_pdf)
 
-        # Add Key Points as CSV
         csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
         zip_file.writestr("summary.csv", csv_summary)
 
-        # Add Quiz as CSV
         csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
         zip_file.writestr("quiz.csv", csv_quiz)
 
-        # Add Pie Chart image
         zip_file.writestr("pie_chart.png", pie_chart_img)
-
-        # Add Word Cloud image
         zip_file.writestr("word_cloud.png", wordcloud_img)
 
     zip_buffer.seek(0)
     return zip_buffer.read()
 
-# Text input area
+# Displaying Header and Texts
 st.markdown("# AI Powered Study Assistant 🚀")
 st.markdown("""
     This app helps you analyze and summarize text to help with your study materials. 
@@ -79,6 +69,7 @@ st.markdown("""
     
     The output is always in **English**, regardless of the input language.
 """)
+
 st.markdown("## Text Input 📝")
 st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
 user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
@@ -256,4 +247,3 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
