@@ -110,6 +110,8 @@ if st.button('Analyze') and user_input and client:
     with st.spinner("Analyzing text..."):
         ai_response = get_ai_response(prompt, user_input)
 
+    st.write("AI Response: ", ai_response)  # Debugging output
+
     try:
         response_data = json.loads(ai_response)
         
