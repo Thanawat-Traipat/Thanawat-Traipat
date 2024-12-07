@@ -137,7 +137,7 @@ if st.button('Analyze') and user_input and client:
 
         # Styling the DataFrame
         styled_df = key_points_df.style.set_properties(
-            **{'width': '5000px', 'text-align': 'center'}  # Increased width
+            **{'width': 'auto', 'text-align': 'center'}  # Auto adjust width
         ).set_table_styles(
             [
                 {'selector': 'thead th', 'props': [('background-color', '#f5f5f5'), ('font-weight', 'bold')]}, 
@@ -149,16 +149,17 @@ if st.button('Analyze') and user_input and client:
             ]
         )
 
+        # Show styled DataFrame using st.write() for better styling support
         st.markdown("## Key Points 📌")
         st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
-        st.dataframe(styled_df, use_container_width=True)
+        st.write(styled_df)
 
         # Quiz
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
-        st.dataframe(quiz_df)
+        st.write(quiz_df)
 
         # Visualization Tabs
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
