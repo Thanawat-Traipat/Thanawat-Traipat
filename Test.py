@@ -32,8 +32,6 @@ def generate_pdf(content):
         pdf.cell(200, 10, txt=line, ln=True)
     return pdf.output(dest="S").encode('latin1')
 
-detail_level = st.slider("Select level of detail to retain", min_value=50, max_value=100, step=25, value=75)
-
 st.markdown("""
 # AI-Powered Study Assistant 🌟
 
@@ -48,11 +46,29 @@ This application helps you analyze and summarize text, making it easy to study k
 Simply input your text, and the AI will do the rest!
 """)
 
-# Updated AI prompt for better output structure and placeholder values.
+# Text input area
+st.markdown("## Text Input 📝")
+st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
+user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
+
+# Slider to adjust detail level
+detail_level = st.slider(
+    "Select level of detail to retain",
+    min_value=40,
+    max_value=100,
+    step=10,
+    value=60,
+    help="Select how much detail you want to retain in the summary and quiz."
+)
+
+# AI prompt that changes based on the slider value
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in English, and you need to complete the following tasks:
 
 Step 1: Summarize the Text (retain {detail_level}%).
+- If the detail level is high (e.g., > 70%), provide a detailed summary with thorough explanations and insights.
+- If the detail level is low (e.g., <= 70%), provide a concise summary with only the key information.
+
 Step 2: Extract key points (provide key point and explanation).
 Step 3: Extract key phrases for word cloud.
 Step 4: Provide data for pie chart based on key point importance.
@@ -95,11 +111,6 @@ Output Format:
 If any section is missing, always include empty objects or empty lists to ensure proper formatting.
 """
 
-st.markdown("## Text Input 📝")
-st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
-
-user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
-
 if not user_api_key:
     st.sidebar.warning("Please provide your OpenAI API key to start using AI features.")
 
@@ -135,31 +146,16 @@ if st.button('Analyze') and user_input and client:
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
 
-        # Styling the DataFrame
-        styled_df = key_points_df.style.set_properties(
-            **{'width': 'auto', 'text-align': 'center'}  # Auto adjust width
-        ).set_table_styles(
-            [
-                {'selector': 'thead th', 'props': [('background-color', '#f5f5f5'), ('font-weight', 'bold')]}, 
-                {'selector': 'tbody td', 'props': [('background-color', '#fafafa')]},
-                {'selector': 'table', 'props': [('border-collapse', 'collapse')]},
-                {'selector': 'table, th, td', 'props': [('border', '1px solid black')]}, 
-                {'selector': 'th', 'props': [('padding', '10px')]}, 
-                {'selector': 'td', 'props': [('padding', '10px')]}
-            ]
-        )
-
-        # Show styled DataFrame using st.write() for better styling support
         st.markdown("## Key Points 📌")
         st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
-        st.write(styled_df)
+        st.dataframe(key_points_df)
 
         # Quiz
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
-        st.write(quiz_df)
+        st.dataframe(quiz_df)
 
         # Visualization Tabs
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
