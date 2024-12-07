@@ -60,37 +60,37 @@ Step 5: Generate 10 quiz questions.
 
 ### **Important Instructions**:
 1. **Complete all sections**: Every part of the response (summary, key points, key phrases, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
-2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{}` for objects or `[]` for lists) where necessary.
-3. **If in doubt**: When unsure, provide **empty JSON structures** like `{}` for missing sections.
+2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{{}}` for objects or `[]` for lists) where necessary.
+3. **If in doubt**: When unsure, provide **empty JSON structures** like `{{}}` for missing sections.
 
 Output Format:
 
-{
+{{
     "Summary": "brief summary of the text",
     "Key Points": [
-        {
+        {{
             "Key Point": "main idea or title",
             "Explanation": "concise explanation"
-        },
+        }},
         ...
     ],
     "Key Phrases": [],
     "Pie Chart Data": [
-        {
+        {{
             "Key Point": "key point title",
             "Percentage": percentage_value
-        },
+        }},
         ...
     ],
     "Quiz": [
-        {
+        {{
             "Question": "quiz question",
             "Answer": "correct answer",
             "Explanation": "answer explanation"
-        },
+        }},
         ...
     ]
-}
+}}
 
 If any section is missing, always include empty objects or empty lists to ensure proper formatting.
 """
