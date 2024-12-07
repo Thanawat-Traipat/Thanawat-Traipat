@@ -3,4 +3,5 @@ openai
 pandas
 matplotlib
 wordcloud
-rake-nltk
+fpdf
+
