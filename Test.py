@@ -164,3 +164,4 @@ else:
                     st.error("The AI response is empty.")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
