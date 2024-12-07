@@ -134,9 +134,22 @@ if st.button('Analyze') and user_input and client:
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
+
+        # Styling the DataFrame
+        styled_df = key_points_df.style.set_properties(
+            **{'width': '250px', 'text-align': 'center'}
+        ).set_table_styles(
+            [{'selector': 'thead th', 'props': [('background-color', '#f5f5f5'), ('font-weight', 'bold')]}, 
+             {'selector': 'tbody td', 'props': [('background-color', '#fafafa')]},
+             {'selector': 'table', 'props': [('border-collapse', 'collapse')]},
+             {'selector': 'table, th, td', 'props': [('border', '1px solid black')]}, 
+             {'selector': 'th', 'props': [('padding', '10px')]}, 
+             {'selector': 'td', 'props': [('padding', '10px')]}
+        ]
+
         st.markdown("## Key Points 📌")
         st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
-        st.dataframe(key_points_df)
+        st.dataframe(styled_df, use_container_width=True)
 
         # Quiz
         quiz_df = pd.DataFrame(quiz)
