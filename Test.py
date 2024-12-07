@@ -48,6 +48,7 @@ This application helps you analyze and summarize text, making it easy to study k
 Simply input your text, and the AI will do the rest!
 """)
 
+# Updated AI prompt for better output structure and placeholder values.
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in English, and you need to complete the following tasks:
 
@@ -58,9 +59,9 @@ Step 4: Provide data for pie chart based on key point importance.
 Step 5: Generate 10 quiz questions.
 
 ### **Important Instructions**:
-1. **Complete all sections**: Every part of the response (summary, key points, key phrases, pie chart data, quiz questions) must be included. If a section cannot be generated, provide a placeholder value to ensure the section is not omitted.
-2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use placeholders where necessary.
-3. **If in doubt**: When unsure, provide a **generic placeholder response** (e.g., “No summary available.” or “Please refer to the summary.”).
+1. **Complete all sections**: Every part of the response (summary, key points, key phrases, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
+2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{}` for objects or `[]` for lists) where necessary.
+3. **If in doubt**: When unsure, provide **empty JSON structures** like `{}` for missing sections.
 
 Output Format:
 
@@ -73,7 +74,7 @@ Output Format:
         },
         ...
     ],
-    "Key Phrases": ["phrase1", "phrase2", ...],
+    "Key Phrases": [],
     "Pie Chart Data": [
         {
             "Key Point": "key point title",
@@ -91,7 +92,7 @@ Output Format:
     ]
 }
 
-If any section is missing, always include placeholder values.
+If any section is missing, always include empty objects or empty lists to ensure proper formatting.
 """
 
 st.markdown("## Text Input 📝")
@@ -116,7 +117,7 @@ if st.button('Analyze') and user_input and client:
         # Fallback data for missing sections
         summary = response_data.get('Summary', "Summary not provided.")
         key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
-        key_phrases = response_data.get('Key Phrases', ["No key phrases extracted."])
+        key_phrases = response_data.get('Key Phrases', [])
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
