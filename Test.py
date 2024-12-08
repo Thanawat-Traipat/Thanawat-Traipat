@@ -84,10 +84,13 @@ Step 1: Summarize the Text.
 - {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
+- The explamation should be concise but detailed. enough to study for an exam.
 Step 3: Extract key phrases and count their frequency of appearance in the text for histogram.
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for pie chart based on key point importance.
+- Return a list of key points with their corresponding percentage count( how much percent they cover in the paragraph)
 Step 5: Generate 10 quiz questions.
+- Should be question that test the student knowledge from the text, to prepare for the exam.
 
 ### **Important Instructions**:
 1. **Complete all sections**: Every part of the response (summary, key points, key phrases with frequency, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
