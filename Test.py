@@ -3,9 +3,10 @@ import openai
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
-from collections import Counter
+from wordcloud import WordCloud
 import io
 import zipfile
+from collections import Counter
 
 user_api_key = st.sidebar.text_input("OpenAI API key", type="password", help="Enter your OpenAI API key to enable AI features.")
 
@@ -45,7 +46,7 @@ def clean_key_phrases(key_phrases, key_points_df):
     key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
     cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
     
-    # Remove any unwanted key points text from the word cloud
+    # Remove any unwanted key points text from the histogram
     for point in key_points_df['Key Points']:
         cleaned_phrases = cleaned_phrases.replace(point, '')  
     
@@ -59,7 +60,7 @@ This application helps you analyze and summarize text, making it easy to study k
 ### What the app does:
 1. **Summarizes text**: Provides a concise summary of any text, no matter the language.
 2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
-3. **Visualizes data**: Creates histograms to represent the frequency of key phrases.
+3. **Visualizes data**: Creates histograms to represent the frequency of key phrases and pie charts to show key point distribution.
 4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
 5. **Multilingual Input, English Output**: Input any text in any language (e.g., Thai, Japanese, Spanish, etc.), and the app will provide the output **in English**.
 
@@ -203,6 +204,23 @@ if st.button('Analyze') and user_input and client:
         The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
         """)
         st.pyplot(fig)
+
+        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+
+        with tab1:
+            st.markdown("## Histogram 📊")
+            st.markdown("""
+            This histogram visualizes the frequency of the most important key phrases from the text. It helps identify which concepts or words appear most frequently.
+            """)
+
+            st.image(histogram_img)
+
+        with tab2:
+            st.markdown("## Pie Chart 📊")
+            st.markdown("""
+            The pie chart visually represents the importance of each key point based on its frequency and significance in the text.
+            """)
+            st.image(pie_chart_img)
 
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
