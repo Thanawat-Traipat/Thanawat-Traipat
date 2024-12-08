@@ -44,7 +44,6 @@ def clean_key_phrases(key_phrases):
     phrase_counter = Counter({item['Phrase']: item['Frequency'] for item in key_phrases})
     return phrase_counter
 
-# App Information
 st.markdown("""
 # Private Tutor App 🎓
 
@@ -56,8 +55,6 @@ Welcome to the Private Tutor App – your personal study assistant powered by AI
 3. **Visualizes data**: Generates a frequency histogram of key phrases and a pie chart to show the importance of each key point.
 4. **Creates quizzes**: Builds 10 quiz questions to help you test your understanding.
 5. **Multilingual Input, English Output**: You can input text in any language, and the app will process and provide output in English.
-
-Simply input your text, and the AI will take care of the rest!
 """)
 
 st.markdown("## Input Your Study Material 📄")
@@ -93,47 +90,9 @@ Step 3: Extract key phrases and count their frequency of appearance in the text 
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for a pie chart based on key point importance.
 - Return a list of key points with their corresponding percentage count (how much they cover in the paragraph and how important they are).
+- Each key point is not equally important and represented.
 Step 5: Generate 10 quiz questions.
 - The questions should test the student’s knowledge from the text, to prepare them for the exam.
-
-### **Important Instructions**:
-1. **Complete all sections**: Every part of the response (summary, key points, key phrases with frequency, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
-2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{{}}` for objects or `[]` for lists) where necessary.
-
-Output Format:
-
-{{
-    "Summary": "brief summary of the text",
-    "Key Points": [
-        {{
-            "Key Point": "main idea or title",
-            "Explanation": "concise explanation"
-        }},
-        ...
-    ],
-    "Key Phrases": [
-        {{
-            "Phrase": "key phrase",
-            "Frequency": count
-        }},
-        ...
-    ],
-    "Pie Chart Data": [
-        {{
-            "Key Point": "key point title",
-            "Percentage": percentage_value
-        }},
-        ...
-    ],
-    "Quiz": [
-        {{
-            "Question": "quiz question",
-            "Answer": "correct answer",
-            "Explanation": "answer explanation"
-        }},
-        ...
-    ]
-}}
 """
 
 if not user_api_key:
@@ -158,12 +117,9 @@ if st.button('Get Tutoring') and user_input and client:
 
         # Display summary
         st.markdown("## Summary 📜")
-        st.markdown("""
-        The summary provides a high-level overview of the text. It helps you quickly grasp the main idea and important concepts.
-        """)
         st.write(summary)
 
-        # Display key points
+        # Display key points DataFrame with increased row height and text wrapping
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
@@ -173,16 +129,23 @@ if st.button('Get Tutoring') and user_input and client:
         st.markdown("""
         The key points break down the text into digestible parts. Each point includes a brief explanation to help you understand the material better.
         """)
-        st.dataframe(key_points_df)
+
+        # Set table styles for better formatting
+        st.dataframe(key_points_df.style.set_properties(**{
+            'text-align': 'left',
+            'white-space': 'pre-wrap',  # Enables text wrapping
+        }).set_table_styles(
+            [{'selector': 'th', 'props': [('font-size', '16px')]}]  # Increases header font size
+        ))
 
         # Display quiz questions
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
-        st.markdown("""
-        To test your understanding, the app generates quiz questions based on the key points. Use these questions to review the material and ensure you're ready for the exam.
-        """)
-        st.dataframe(quiz_df)
+        st.dataframe(quiz_df.style.set_properties(**{
+            'text-align': 'left',
+            'white-space': 'pre-wrap',
+        }))
 
         # Generate pie chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
@@ -190,7 +153,7 @@ if st.button('Get Tutoring') and user_input and client:
         fig, ax = plt.subplots()
         ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.axis('equal')
-        plt.tight_layout()  # Fixes cropping issue
+        plt.tight_layout(pad=3.0, bbox_inches='tight')  # Fix cropping issue
 
         pie_chart_img = io.BytesIO()
         plt.savefig(pie_chart_img, format='png')
@@ -206,7 +169,7 @@ if st.button('Get Tutoring') and user_input and client:
         ax.set_ylabel('Frequency')
         ax.set_title('Frequency of Key Phrases')
         plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()  # Fixes cropping issue
+        plt.tight_layout(pad=3.0, bbox_inches='tight')
 
         histogram_img = io.BytesIO()
         plt.savefig(histogram_img, format='png')
@@ -238,3 +201,4 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
