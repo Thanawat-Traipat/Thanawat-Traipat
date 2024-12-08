@@ -142,10 +142,10 @@ if st.button('Get Tutoring') and user_input and client:
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
-        st.dataframe(quiz_df.style.set_properties(**{
-            'text-align': 'left',
-            'white-space': 'pre-wrap',
-        }))
+        st.markdown("""
+        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams.
+        """)
+        st.dataframe(quiz_df)
 
         # Generate pie chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
@@ -189,7 +189,7 @@ if st.button('Get Tutoring') and user_input and client:
         with tab2:
             st.image(pie_chart_img)
 
-        # Create zip file for download
+        # Generate zip file for download
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
         st.download_button(
@@ -201,4 +201,5 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
 
