@@ -204,23 +204,13 @@ if st.button('Analyze') and user_input and client:
         st.markdown("""
         The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
         """)
-        st.pyplot(fig)
 
-        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Pie Chart"])
 
         with tab1:
-            st.markdown("## Histogram 📊")
-            st.markdown("""
-            This histogram visualizes the frequency of the most important key phrases from the text. It helps identify which concepts or words appear most frequently.
-            """)
-
             st.image(histogram_img)
 
         with tab2:
-            st.markdown("## Pie Chart 📊")
-            st.markdown("""
-            The pie chart visually represents the importance of each key point based on its frequency and significance in the text.
-            """)
             st.image(pie_chart_img)
 
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
