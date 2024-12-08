@@ -148,7 +148,6 @@ if st.button('Get Tutoring') and user_input and client:
     try:
         response_data = json.loads(ai_response)
 
-        # Fallback data for missing sections
         summary = response_data.get('Summary', "Summary not provided.")
         key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
         key_phrases = response_data.get('Key Phrases', [])
@@ -185,12 +184,12 @@ if st.button('Get Tutoring') and user_input and client:
         fig, ax = plt.subplots()
         ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.axis('equal')
+        plt.tight_layout()
 
         pie_chart_img = io.BytesIO()
         plt.savefig(pie_chart_img, format='png')
         pie_chart_img.seek(0)
 
-        # Create Key Phrase Frequency Histogram
         phrase_counter = clean_key_phrases(key_phrases)
         phrases, counts = zip(*phrase_counter.items())
 
@@ -199,18 +198,19 @@ if st.button('Get Tutoring') and user_input and client:
         ax.set_xlabel('Key Phrases')
         ax.set_ylabel('Frequency')
         ax.set_title('Frequency of Key Phrases')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
 
         histogram_img = io.BytesIO()
-        plt.xticks(rotation=45, ha='right')
         plt.savefig(histogram_img, format='png')
         histogram_img.seek(0)
 
-        st.markdown("## Key Phrase Frequency Histogram 📊")
+        st.markdown("## Data Visualization 📊")
         st.markdown("""
-        The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
+        The histogram and pie chart give you a visual overview of the material, helping you see which key phrases appear most frequently and which key points are most emphasized.
         """)
 
-        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Pie Chart"])
+        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Key Point Pie Chart"])
 
         with tab1:
             st.image(histogram_img)
@@ -221,7 +221,7 @@ if st.button('Get Tutoring') and user_input and client:
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
         st.download_button(
-            label="Download All (ZIP)",
+            label="Download All Results (ZIP)",
             data=zip_file,
             file_name="PrivateTutorApp_output.zip",
             mime="application/zip"
@@ -229,3 +229,4 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
