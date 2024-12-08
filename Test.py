@@ -41,14 +41,20 @@ def create_zip(key_points_df, quiz_df, pie_chart_img, histogram_img):
     return zip_buffer.read()
 
 def clean_key_phrases(key_phrases, key_points_df):
-    key_phrases_text = ' '.join(key_phrases)
-    key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
-    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
+    # Extract the actual phrases from the AI output (assuming it's a list of dictionaries)
+    key_phrases_text = ' '.join([item['Phrase'] for item in key_phrases])
+
+    # Clean up the text by removing unwanted words (e.g., key points that might overlap)
+    key_points_text = ' '.join(key_points_df['Explanation'].tolist())  # Get explanations of key points
+    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  # Remove non-alphabetic words
     
+    # Remove the actual key points from the key phrases text
     for point in key_points_df['Key Points']:
         cleaned_phrases = cleaned_phrases.replace(point, '')  
     
-    return cleaned_phrases.strip()
+    # Now, we can count the frequency of each phrase in the cleaned-up text.
+    phrase_counter = Counter(cleaned_phrases.split())
+    return phrase_counter
 
 st.markdown("""
 # AI-Powered Study Assistant 🌟
