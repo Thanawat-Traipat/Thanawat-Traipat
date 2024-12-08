@@ -151,23 +151,32 @@ if st.button('Analyze') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        # Display Summary
+        # Display Summary with Explanation
         st.markdown("## Summary of Text 📝")
+        st.markdown("""
+        The summary provides a brief, high-level overview of the text. Depending on the selected level of detail, the summary will include key points or provide more thorough explanations.
+        """)
         st.write(summary)
 
-        # Key Points DataFrame
+        # Key Points DataFrame with Explanation
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
 
         st.markdown("## Key Points 📌")
+        st.markdown("""
+        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.
+        """)
         st.dataframe(key_points_df)
 
-        # Quiz DataFrame
+        # Quiz DataFrame with Explanation
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
+        st.markdown("""
+        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams.
+        """)
         st.dataframe(quiz_df)
 
         # Create the Pie Chart
@@ -187,22 +196,14 @@ if st.button('Analyze') and user_input and client:
         wordcloud.to_image().save(wordcloud_img, format='PNG')
         wordcloud_img.seek(0)
 
-        # Generate the ZIP with all files
-        zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), wordcloud_img.getvalue())
-
-        # Provide the download button for the ZIP file
-        st.download_button(
-            label="Download All (ZIP)",
-            data=zip_file,
-            file_name="PrivateTutorApp_output.zip",
-            mime="application/zip"
-        )
-
-        # Tabs for WordCloud and PieChart
+        # Visualization Tabs with Explanation
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
 
         with tab1:
             st.markdown("## Word Cloud 🌥️")
+            st.markdown("""
+            The word cloud shows the most important words and phrases extracted from the text. The bigger the word, the more frequently it appears in the text. This gives you a quick visual of key themes.
+            """)
             key_phrases_text = ' '.join(key_phrases)
 
             if key_phrases_text.strip():
@@ -215,6 +216,9 @@ if st.button('Analyze') and user_input and client:
 
         with tab2:
             st.markdown("## Pie Chart 📊")
+            st.markdown("""
+            The pie chart breaks down the relative importance of each key point based on how frequently it is mentioned or emphasized in the text.
+            """)
             if not key_points_df.empty:
                 pie_labels = key_points_df['Key Points']
                 pie_sizes = [len(k) for k in key_points_df['Explanation']]
@@ -222,6 +226,16 @@ if st.button('Analyze') and user_input and client:
                 ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90)
                 ax.axis('equal')
                 st.pyplot(fig)
+
+        # Move Download All Button to the Bottom
+        zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), wordcloud_img.getvalue())
+        st.markdown("---")
+        st.download_button(
+            label="Download All (ZIP)",
+            data=zip_file,
+            file_name="PrivateTutorApp_output.zip",
+            mime="application/zip"
+        )
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
