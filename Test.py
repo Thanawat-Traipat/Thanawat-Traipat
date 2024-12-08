@@ -53,7 +53,7 @@ detail_level = st.slider(
     min_value=40,
     max_value=100,
     step=10,
-    value=80,
+    value=60,
     help="Select how much detail you want to retain in the summary and quiz."
 )
 
