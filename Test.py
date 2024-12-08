@@ -45,10 +45,6 @@ def clean_key_phrases(key_phrases, key_points_df):
     key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
     cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
     
-    # Remove any unwanted key points text from the word cloud
-    for point in key_points_df['Key Points']:
-        cleaned_phrases = cleaned_phrases.replace(point, '')  
-    
     return cleaned_phrases.strip()
 
 st.markdown("""
