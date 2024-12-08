@@ -29,15 +29,14 @@ def get_ai_response(prompt, user_input):
 def generate_pdf(content, title):
     pdf = FPDF()
     pdf.add_page()
-    
-    pdf.set_font("Arial", size=12)  # Basic font, no Unicode needed
+    pdf.set_font("Arial", size=12)  
     pdf.cell(200, 10, txt=title, ln=True, align='C')
-    pdf.ln(10)  # Line break
+    pdf.ln(10)  
 
     for line in content.split('\n'):
         pdf.cell(200, 10, txt=line, ln=True)
 
-    return pdf.output(dest="S").encode('latin1')  # Default encoding for PDF download
+    return pdf.output(dest="S").encode('latin1')  
 
 def create_zip(summary, key_points_df, quiz_df, pie_chart_img, wordcloud_img):
     zip_buffer = io.BytesIO()
@@ -156,17 +155,9 @@ if st.button('Analyze') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        # Save the data in session_state
-        st.session_state.summary = summary
-        st.session_state.key_points = key_points
-        st.session_state.key_phrases = key_phrases
-        st.session_state.pie_chart_data = pie_chart_data
-        st.session_state.quiz = quiz
-
         # Display the Summary
         st.markdown("## Summary of Text 📝")
-        st.markdown("This section provides a detailed summary of the text. It condenses the most important information so you can grasp the key concepts at a glance.")
-        st.write(st.session_state.summary)
+        st.write(summary)
 
         # Create the Pie Chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
@@ -186,20 +177,18 @@ if st.button('Analyze') and user_input and client:
         wordcloud_img.seek(0)
 
         # Display Key Points
-        key_points_df = pd.DataFrame(st.session_state.key_points)
+        key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
 
         st.markdown("## Key Points 📌")
-        st.markdown("Each main idea from the text is listed here, along with a brief explanation.")
         st.dataframe(key_points_df)
 
         # Display Quiz
-        quiz_df = pd.DataFrame(st.session_state.quiz)
+        quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
-        st.markdown("Test your understanding with 10 quiz questions generated from the text. You can use this section to prepare for exams or review important concepts.")
         st.dataframe(quiz_df)
 
         # Generate the ZIP with all files
@@ -218,15 +207,10 @@ if st.button('Analyze') and user_input and client:
 
         with tab1:
             st.markdown("## Word Cloud 🌥️")
-            st.markdown("The word cloud highlights the most important phrases extracted from the text. The larger the word, the more frequently it appears in the text.")
-            key_phrases_text = ' '.join(st.session_state.key_phrases)
+            key_phrases_text = ' '.join(key_phrases)
 
             if key_phrases_text.strip():
-                wordcloud = WordCloud(
-                    width=800, height=400,
-                    background_color="white", 
-                    colormap="viridis"
-                ).generate(key_phrases_text)
+                wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="viridis").generate(key_phrases_text)
 
                 plt.imshow(wordcloud, interpolation='bilinear')
                 plt.axis("off")
@@ -236,7 +220,6 @@ if st.button('Analyze') and user_input and client:
 
         with tab2:
             st.markdown("## Pie Chart 📊")
-            st.markdown("The pie chart visually represents the relative importance of each key point based on its presence and significance in the text.")
             if not key_points_df.empty:
                 pie_labels = key_points_df['Key Points']
                 pie_sizes = [len(k) for k in key_points_df['Explanation']]
