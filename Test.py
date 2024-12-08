@@ -44,7 +44,6 @@ def clean_key_phrases(key_phrases):
     phrase_counter = Counter({item['Phrase']: item['Frequency'] for item in key_phrases})
     return phrase_counter
 
-# App Information
 st.markdown("""
 # Private Tutor App 🎓
 
@@ -156,14 +155,12 @@ if st.button('Get Tutoring') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        # Display summary
         st.markdown("## Summary 📜")
         st.markdown("""
         The summary provides a high-level overview of the text. It helps you quickly grasp the main idea and important concepts.
         """)
         st.write(summary)
 
-        # Display key points
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
@@ -175,7 +172,6 @@ if st.button('Get Tutoring') and user_input and client:
         """)
         st.dataframe(key_points_df)
 
-        # Display quiz questions
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
@@ -184,7 +180,6 @@ if st.button('Get Tutoring') and user_input and client:
         """)
         st.dataframe(quiz_df)
 
-        # Generate pie chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
         pie_sizes = [point['Percentage'] for point in pie_chart_data]
         fig, ax = plt.subplots()
@@ -238,3 +233,4 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
