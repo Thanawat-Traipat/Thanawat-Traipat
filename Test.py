@@ -91,7 +91,8 @@ Step 2: Extract key points (provide key point and explanation).
 Step 3: Extract key phrases and count their frequency of appearance in the text for a histogram.
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for a pie chart based on key point importance.
-- Return a list of key points with their corresponding percentage count (how much they cover in the paragraph and how important they are).
+- Return a list of key points with their corresponding percentage count (how much they cover in the full text and how important they are).
+- not all keypoint are as important or hold the same weight. This should be reflected in the pie chart, having all of them being the same percentage is strange and will be most likely incorrect.
 Step 5: Generate 10 quiz questions.
 - The questions should test the student’s knowledge from the text, to prepare them for the exam.
 
