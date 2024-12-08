@@ -5,6 +5,7 @@ import json
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import io
+import zipfile
 
 # Sidebar input for OpenAI API key
 user_api_key = st.sidebar.text_input("OpenAI API key", type="password", help="Enter your OpenAI API key to enable AI features.")
@@ -25,6 +26,27 @@ def get_ai_response(prompt, user_input):
         messages=messages
     )
     return response.choices[0].message.content
+
+# Function to create a zip file
+def create_zip(key_points_df, quiz_df, pie_chart_img, wordcloud_img):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        # Add Key Points CSV
+        csv_keypoints = key_points_df.to_csv(index=False).encode('utf-8')
+        zip_file.writestr("1.keypoints.csv", csv_keypoints)
+
+        # Add Quiz CSV
+        csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
+        zip_file.writestr("2.quiz.csv", csv_quiz)
+
+        # Add Pie Chart Image
+        zip_file.writestr("4.piechart.png", pie_chart_img)
+
+        # Add Word Cloud Image
+        zip_file.writestr("3.wordcloud.png", wordcloud_img)
+
+    zip_buffer.seek(0)
+    return zip_buffer.read()
 
 # Displaying Header and Instructions
 st.markdown("""
@@ -47,23 +69,26 @@ st.markdown("## Text Input 📝")
 st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
 user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
 
-# Slider to adjust detail level
-detail_level = st.slider(
-    "Select level of detail to retain",
-    min_value=40,
-    max_value=100,
-    step=10,
-    value=60,
-    help="Select how much detail you want to retain in the summary and quiz."
+# Option to select level of detail
+detail_level = st.selectbox(
+    "Choose the level of analysis detail:",
+    options=["Basic Overview", "Detailed Overview", "Thorough Analysis"],
+    help="Select how much detail you want in the analysis."
 )
 
-# AI prompt that changes based on slider value
+# AI prompt that changes based on the selected detail level
+if detail_level == "Basic Overview":
+    detail_instructions = "provide a very brief summary with only the key information."
+elif detail_level == "Detailed Overview":
+    detail_instructions = "provide a detailed summary with moderate depth and important concepts."
+else:
+    detail_instructions = "provide a thorough analysis with detailed explanations and insights."
+
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in any language, but you need to always respond in **English**. Complete the following tasks:
 
-Step 1: Summarize the Text (retain {detail_level}%).
-- If the detail level is high (e.g., > 70%), provide a detailed summary with thorough explanations and insights.
-- If the detail level is low (e.g., <= 70%), provide a concise summary with only the key information.
+Step 1: Summarize the Text ({detail_level}).
+- {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
 Step 3: Extract key phrases for word cloud.
@@ -139,62 +164,64 @@ if st.button('Analyze') and user_input and client:
         st.markdown("## Key Points 📌")
         st.dataframe(key_points_df)
 
-        # Key Points CSV Download
-        csv_summary = key_points_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download Key Points (CSV)",
-            data=csv_summary,
-            file_name="1.keypoints.csv",
-            mime="text/csv"
-        )
-
         # Quiz DataFrame
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.dataframe(quiz_df)
 
-        # Quiz CSV Download
-        csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
+        # Create the Pie Chart
+        pie_labels = [point['Key Point'] for point in pie_chart_data]
+        pie_sizes = [point['Percentage'] for point in pie_chart_data]
+        fig, ax = plt.subplots()
+        ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+        ax.axis('equal')
+
+        pie_chart_img = io.BytesIO()
+        plt.savefig(pie_chart_img, format='png')
+        pie_chart_img.seek(0)
+
+        # Create the WordCloud
+        wordcloud = WordCloud(width=800, height=400, background_color="white").generate(' '.join(key_phrases))
+        wordcloud_img = io.BytesIO()
+        wordcloud.to_image().save(wordcloud_img, format='PNG')
+        wordcloud_img.seek(0)
+
+        # Generate the ZIP with all files
+        zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), wordcloud_img.getvalue())
+
+        # Provide the download button for the ZIP file
         st.download_button(
-            label="Download Quiz (CSV)",
-            data=csv_quiz,
-            file_name="2.quiz.csv",
-            mime="text/csv"
+            label="Download All (ZIP)",
+            data=zip_file,
+            file_name="PrivateTutorApp_output.zip",
+            mime="application/zip"
         )
 
-        # Visualization Tabs
+        # Tabs for WordCloud and PieChart
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
 
-        # Word Cloud Visualization
         with tab1:
             st.markdown("## Word Cloud 🌥️")
-            st.markdown("The word cloud highlights the most important phrases extracted from the text.")
             key_phrases_text = ' '.join(key_phrases)
 
             if key_phrases_text.strip():
-                wordcloud = WordCloud(
-                    width=800, height=400,
-                    background_color="white", 
-                    colormap="viridis"
-                ).generate(key_phrases_text)
-
+                wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="viridis").generate(key_phrases_text)
                 plt.imshow(wordcloud, interpolation='bilinear')
                 plt.axis("off")
                 st.pyplot(plt.gcf())
             else:
                 st.warning("No key phrases were extracted for the word cloud.")
 
-        # Pie Chart Visualization
         with tab2:
             st.markdown("## Pie Chart 📊")
-            st.markdown("The pie chart visually represents the relative importance of each key point.")
-            pie_labels = [point['Key Point'] for point in pie_chart_data]
-            pie_sizes = [point['Percentage'] for point in pie_chart_data]
-            fig, ax = plt.subplots()
-            ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
-            ax.axis('equal')
-            st.pyplot(fig)
+            if not key_points_df.empty:
+                pie_labels = key_points_df['Key Points']
+                pie_sizes = [len(k) for k in key_points_df['Explanation']]
+                fig, ax = plt.subplots()
+                ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90)
+                ax.axis('equal')
+                st.pyplot(fig)
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
