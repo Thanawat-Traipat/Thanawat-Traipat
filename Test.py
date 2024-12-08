@@ -7,7 +7,6 @@ from wordcloud import WordCloud
 import io
 import zipfile
 
-# Sidebar input for OpenAI API key
 user_api_key = st.sidebar.text_input("OpenAI API key", type="password", help="Enter your OpenAI API key to enable AI features.")
 
 if user_api_key:
@@ -15,7 +14,6 @@ if user_api_key:
 else:
     client = None
 
-# Function to call OpenAI API
 def get_ai_response(prompt, user_input):
     messages = [
         {"role": "system", "content": prompt},
@@ -27,28 +25,26 @@ def get_ai_response(prompt, user_input):
     )
     return response.choices[0].message.content
 
-# Function to create a zip file
 def create_zip(key_points_df, quiz_df, pie_chart_img, wordcloud_img):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-        # Add Key Points CSV
         csv_keypoints = key_points_df.to_csv(index=False).encode('utf-8')
         zip_file.writestr("1.keypoints.csv", csv_keypoints)
 
-        # Add Quiz CSV
         csv_quiz = quiz_df.to_csv(index=False).encode('utf-8')
         zip_file.writestr("2.quiz.csv", csv_quiz)
 
-        # Add Pie Chart Image
         zip_file.writestr("4.piechart.png", pie_chart_img)
-
-        # Add Word Cloud Image
         zip_file.writestr("3.wordcloud.png", wordcloud_img)
 
     zip_buffer.seek(0)
     return zip_buffer.read()
 
-# Displaying Header and Instructions
+def clean_key_phrases(key_phrases):
+    key_phrases_text = ' '.join(key_phrases)
+    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())
+    return cleaned_phrases
+
 st.markdown("""
 # AI-Powered Study Assistant 🌟
 
@@ -64,19 +60,16 @@ This application helps you analyze and summarize text, making it easy to study k
 Simply input your text, and the AI will do the rest!
 """)
 
-# Text input area
 st.markdown("## Text Input 📝")
 st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
 user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
 
-# Option to select level of detail
 detail_level = st.selectbox(
     "Choose the level of analysis detail:",
     options=["Basic Overview", "Detailed Overview", "Thorough Analysis"],
     help="Select how much detail you want in the analysis."
 )
 
-# AI prompt that changes based on the selected detail level
 if detail_level == "Basic Overview":
     detail_instructions = "provide a very brief summary with only the key information."
 elif detail_level == "Detailed Overview":
@@ -135,30 +128,25 @@ if not user_api_key:
 if not user_input:
     st.warning("Please provide some text to analyze.")
 
-# Analyze button and output processing
 if st.button('Analyze') and user_input and client:
     with st.spinner("Analyzing text..."):
         ai_response = get_ai_response(prompt, user_input)
 
     try:
-        # Ensure the AI response is valid JSON
         response_data = json.loads(ai_response)
 
-        # Fallback data for missing sections
         summary = response_data.get('Summary', "Summary not provided.")
         key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
         key_phrases = response_data.get('Key Phrases', [])
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        # Display Summary with Explanation
         st.markdown("## Summary of Text 📝")
         st.markdown("""
         The summary provides a brief, high-level overview of the text. Depending on the selected level of detail, the summary will include key points or provide more thorough explanations.
         """)
         st.write(summary)
 
-        # Key Points DataFrame with Explanation
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
@@ -170,7 +158,6 @@ if st.button('Analyze') and user_input and client:
         """)
         st.dataframe(key_points_df)
 
-        # Quiz DataFrame with Explanation
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
@@ -179,7 +166,6 @@ if st.button('Analyze') and user_input and client:
         """)
         st.dataframe(quiz_df)
 
-        # Create the Pie Chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
         pie_sizes = [point['Percentage'] for point in pie_chart_data]
         fig, ax = plt.subplots()
@@ -190,13 +176,12 @@ if st.button('Analyze') and user_input and client:
         plt.savefig(pie_chart_img, format='png')
         pie_chart_img.seek(0)
 
-        # Create the WordCloud
-        wordcloud = WordCloud(width=800, height=400, background_color="white").generate(' '.join(key_phrases))
+        cleaned_key_phrases = clean_key_phrases(key_phrases)
+        wordcloud = WordCloud(width=800, height=400, background_color="white").generate(cleaned_key_phrases)
         wordcloud_img = io.BytesIO()
         wordcloud.to_image().save(wordcloud_img, format='PNG')
         wordcloud_img.seek(0)
 
-        # Visualization Tabs with Explanation
         tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
 
         with tab1:
@@ -204,10 +189,9 @@ if st.button('Analyze') and user_input and client:
             st.markdown("""
             The word cloud shows the most important words and phrases extracted from the text. The bigger the word, the more frequently it appears in the text. This gives you a quick visual of key themes.
             """)
-            key_phrases_text = ' '.join(key_phrases)
 
-            if key_phrases_text.strip():
-                wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="viridis").generate(key_phrases_text)
+            if cleaned_key_phrases.strip():
+                wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="viridis").generate(cleaned_key_phrases)
                 plt.imshow(wordcloud, interpolation='bilinear')
                 plt.axis("off")
                 st.pyplot(plt.gcf())
@@ -227,7 +211,6 @@ if st.button('Analyze') and user_input and client:
                 ax.axis('equal')
                 st.pyplot(fig)
 
-        # Move Download All Button to the Bottom
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), wordcloud_img.getvalue())
         st.markdown("---")
         st.download_button(
@@ -239,3 +222,4 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
