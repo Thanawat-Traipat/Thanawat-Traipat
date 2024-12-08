@@ -46,7 +46,6 @@ def clean_key_phrases(key_phrases, key_points_df):
     key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
     cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
     
-    # Remove any unwanted key points text from the histogram
     for point in key_points_df['Key Points']:
         cleaned_phrases = cleaned_phrases.replace(point, '')  
     
@@ -140,8 +139,10 @@ if st.button('Analyze') and user_input and client:
         ai_response = get_ai_response(prompt, user_input)
 
     try:
+        # Ensure the response contains all required fields
         response_data = json.loads(ai_response)
 
+        # Fallback data for missing sections
         summary = response_data.get('Summary', "Summary not provided.")
         key_points = response_data.get('Key Points', [{"Key Point": "No Key Points", "Explanation": "No explanation provided."}])
         key_phrases = response_data.get('Key Phrases', [])
