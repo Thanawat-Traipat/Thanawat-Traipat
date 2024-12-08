@@ -91,14 +91,13 @@ Step 2: Extract key points (provide key point and explanation).
 Step 3: Extract key phrases and count their frequency of appearance in the text for a histogram.
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for a pie chart based on key point importance.
-- Return a list of key points with their corresponding percentage count (how much they cover in the full text and how important they are).
-- not all keypoint are as important or hold the same weight. This should be reflected in the pie chart, having all of them being the same percentage is strange and will be most likely incorrect.
+- Return a list of key points with their corresponding percentage count (how much they cover in the paragraph and how important they are).
 Step 5: Generate 10 quiz questions.
 - The questions should test the student’s knowledge from the text, to prepare them for the exam.
 
 ### **Important Instructions**:
 1. **Complete all sections**: Every part of the response (summary, key points, key phrases with frequency, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
-2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{{}}` for objects or `[]` for lists) where necessary.
+2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like {{}} for objects or [] for lists) where necessary.
 
 Output Format:
 
@@ -156,9 +155,9 @@ if st.button('Get Tutoring') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        st.markdown("## Summary 📜")
+        st.markdown("## Summary of Text 📝")
         st.markdown("""
-        The summary provides a high-level overview of the text. It helps you quickly grasp the main idea and important concepts.
+        The summary provides a brief, high-level overview of the text. Depending on the selected level of detail, the summary will include key points or provide more thorough explanations.
         """)
         st.write(summary)
 
@@ -167,9 +166,9 @@ if st.button('Get Tutoring') and user_input and client:
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
 
-        st.markdown("## Key Points 🔑")
+        st.markdown("## Key Points 📌")
         st.markdown("""
-        The key points break down the text into digestible parts. Each point includes a brief explanation to help you understand the material better.
+        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.
         """)
         st.dataframe(key_points_df)
 
@@ -177,7 +176,7 @@ if st.button('Get Tutoring') and user_input and client:
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("""
-        To test your understanding, the app generates quiz questions based on the key points. Use these questions to review the material and ensure you're ready for the exam.
+        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams.
         """)
         st.dataframe(quiz_df)
 
@@ -186,7 +185,6 @@ if st.button('Get Tutoring') and user_input and client:
         fig, ax = plt.subplots()
         ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.axis('equal')
-        plt.tight_layout()  # Fixes cropping issue
 
         pie_chart_img = io.BytesIO()
         plt.savefig(pie_chart_img, format='png')
@@ -201,20 +199,18 @@ if st.button('Get Tutoring') and user_input and client:
         ax.set_xlabel('Key Phrases')
         ax.set_ylabel('Frequency')
         ax.set_title('Frequency of Key Phrases')
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()  # Fixes cropping issue
 
         histogram_img = io.BytesIO()
+        plt.xticks(rotation=45, ha='right')
         plt.savefig(histogram_img, format='png')
         histogram_img.seek(0)
 
-        # Data visualization tabs
-        st.markdown("## Data Visualization 📊")
+        st.markdown("## Key Phrase Frequency Histogram 📊")
         st.markdown("""
-        The histogram and pie chart give you a visual overview of the material, helping you see which key phrases appear most frequently and which key points are most emphasized.
+        The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
         """)
 
-        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Key Point Pie Chart"])
+        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Pie Chart"])
 
         with tab1:
             st.image(histogram_img)
@@ -222,11 +218,10 @@ if st.button('Get Tutoring') and user_input and client:
         with tab2:
             st.image(pie_chart_img)
 
-        # Create zip file for download
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
         st.download_button(
-            label="Download All Results (ZIP)",
+            label="Download All (ZIP)",
             data=zip_file,
             file_name="PrivateTutorApp_output.zip",
             mime="application/zip"
@@ -234,4 +229,3 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
