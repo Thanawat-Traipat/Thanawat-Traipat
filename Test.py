@@ -40,20 +40,9 @@ def create_zip(key_points_df, quiz_df, pie_chart_img, histogram_img):
     zip_buffer.seek(0)
     return zip_buffer.read()
 
-def clean_key_phrases(key_phrases, key_points_df):
-    # Extract the actual phrases from the AI output (assuming it's a list of dictionaries)
-    key_phrases_text = ' '.join([item['Phrase'] for item in key_phrases])
-
-    # Clean up the text by removing unwanted words (e.g., key points that might overlap)
-    key_points_text = ' '.join(key_points_df['Explanation'].tolist())  # Get explanations of key points
-    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  # Remove non-alphabetic words
-    
-    # Remove the actual key points from the key phrases text
-    for point in key_points_df['Key Points']:
-        cleaned_phrases = cleaned_phrases.replace(point, '')  
-    
-    # Now, we can count the frequency of each phrase in the cleaned-up text.
-    phrase_counter = Counter(cleaned_phrases.split())
+def clean_key_phrases(key_phrases):
+    # Directly using key phrases with their frequencies as provided in the response
+    phrase_counter = Counter({item['Phrase']: item['Frequency'] for item in key_phrases})
     return phrase_counter
 
 st.markdown("""
@@ -197,8 +186,7 @@ if st.button('Analyze') and user_input and client:
         pie_chart_img.seek(0)
 
         # Create Key Phrase Frequency Histogram
-        cleaned_key_phrases = clean_key_phrases(key_phrases, key_points_df)
-        phrase_counter = Counter(cleaned_key_phrases.split())
+        phrase_counter = clean_key_phrases(key_phrases)
         phrases, counts = zip(*phrase_counter.items())
 
         fig, ax = plt.subplots(figsize=(10, 5))
@@ -236,3 +224,4 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
