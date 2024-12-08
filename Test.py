@@ -92,6 +92,7 @@ Step 3: Extract key phrases and count their frequency of appearance in the text 
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for a pie chart based on key point importance.
 - Return a list of key points with their corresponding percentage count (how much they cover in the paragraph and how important they are).
+- not all keypoint are as important or hold the same weight. This should be reflected in the pie chart, having all of them being the same percentage is strange and will be most likely incorrect.
 Step 5: Generate 10 quiz questions.
 - The questions should test the student’s knowledge from the text, to prepare them for the exam.
 
@@ -167,7 +168,7 @@ if st.button('Get Tutoring') and user_input and client:
 
         st.markdown("## Key Points 📌")
         st.markdown("""
-        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.
+        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.(Double click on each cells for full text)
         """)
         st.dataframe(key_points_df)
 
