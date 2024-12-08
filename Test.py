@@ -45,6 +45,10 @@ def clean_key_phrases(key_phrases, key_points_df):
     key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
     cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
     
+    # Remove any unwanted key points text from the word cloud
+    for point in key_points_df['Key Points']:
+        cleaned_phrases = cleaned_phrases.replace(point, '')  
+    
     return cleaned_phrases.strip()
 
 st.markdown("""
@@ -82,7 +86,7 @@ else:
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in any language, but you need to always respond in **English**. Complete the following tasks:
 
-Step 1: Summarize the Text ({detail_level}).
+Step 1: Summarize the Text.
 - {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
@@ -224,4 +228,3 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
