@@ -40,10 +40,15 @@ def create_zip(key_points_df, quiz_df, pie_chart_img, wordcloud_img):
     zip_buffer.seek(0)
     return zip_buffer.read()
 
-def clean_key_phrases(key_phrases):
+def clean_key_phrases(key_phrases, key_points_df):
     key_phrases_text = ' '.join(key_phrases)
-    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())
-    return cleaned_phrases
+    key_points_text = ' '.join(key_points_df['Explanation'].tolist())  
+    cleaned_phrases = ' '.join(word for word in key_phrases_text.split() if word.isalpha())  
+    
+    for point in key_points_df['Key Points']:
+        cleaned_phrases = cleaned_phrases.replace(point, '')  
+    
+    return cleaned_phrases.strip()
 
 st.markdown("""
 # AI-Powered Study Assistant 🌟
@@ -176,7 +181,7 @@ if st.button('Analyze') and user_input and client:
         plt.savefig(pie_chart_img, format='png')
         pie_chart_img.seek(0)
 
-        cleaned_key_phrases = clean_key_phrases(key_phrases)
+        cleaned_key_phrases = clean_key_phrases(key_phrases, key_points_df)
         wordcloud = WordCloud(width=800, height=400, background_color="white").generate(cleaned_key_phrases)
         wordcloud_img = io.BytesIO()
         wordcloud.to_image().save(wordcloud_img, format='PNG')
@@ -222,4 +227,3 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
