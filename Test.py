@@ -72,10 +72,13 @@ detail_level = st.selectbox(
 
 if detail_level == "Basic Overview":
     detail_instructions = "provide a very brief summary with only the key information."
+    detail_instructions_2 = "provide the main keypoint and concise explanation"
 elif detail_level == "Detailed Overview":
     detail_instructions = "provide a detailed summary with moderate depth and important concepts."
+    detail_instructions_2 = "provide several key point with detailed explanation with moderate depth and important concepts."
 else:
     detail_instructions = "provide a thorough analysis with detailed explanations and insights."
+    detail_instructions_2 = "provide a thorough analysis with large number of key points and extremely detailed explanations and insights."
 
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in any language, but you need to always respond in **English**. Complete the following tasks:
@@ -84,8 +87,7 @@ Step 1: Summarize the Text.
 - {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
-- The explamation should be concise but detailed. enough to study for an exam.
-- The explanation should be 2 - 3 sentences each
+- {detail_instructions_2}
 Step 3: Extract key phrases and count their frequency of appearance in the text for histogram.
 - Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for pie chart based on key point importance.
