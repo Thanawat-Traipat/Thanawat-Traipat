@@ -3,7 +3,6 @@ import openai
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud
 import io
 import zipfile
 from collections import Counter
