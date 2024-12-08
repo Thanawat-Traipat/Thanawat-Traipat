@@ -89,12 +89,13 @@ Step 1: Summarize the Text.
 - {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
-Step 3: Extract key phrases for histogram.
+Step 3: Extract key phrases and count their frequency of appearance in the text for histogram.
+- Return a list of key phrases with their corresponding frequency counts.
 Step 4: Provide data for pie chart based on key point importance.
 Step 5: Generate 10 quiz questions.
 
 ### **Important Instructions**:
-1. **Complete all sections**: Every part of the response (summary, key points, key phrases, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
+1. **Complete all sections**: Every part of the response (summary, key points, key phrases with frequency, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
 2. **Formatting**: The output must always adhere to the structured JSON format shown below. Use empty placeholders (like `{{}}` for objects or `[]` for lists) where necessary.
 
 Output Format:
@@ -108,7 +109,13 @@ Output Format:
         }},
         ...
     ],
-    "Key Phrases": [],
+    "Key Phrases": [
+        {{
+            "Phrase": "key phrase",
+            "Frequency": count
+        }},
+        ...
+    ],
     "Pie Chart Data": [
         {{
             "Key Point": "key point title",
@@ -183,7 +190,7 @@ if st.button('Analyze') and user_input and client:
         plt.savefig(pie_chart_img, format='png')
         pie_chart_img.seek(0)
 
-        # Create Key Phrase Histogram
+        # Create Key Phrase Frequency Histogram
         cleaned_key_phrases = clean_key_phrases(key_phrases, key_points_df)
         phrase_counter = Counter(cleaned_key_phrases.split())
         phrases, counts = zip(*phrase_counter.items())
