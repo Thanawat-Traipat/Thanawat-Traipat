@@ -3,7 +3,7 @@ import openai
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud
+from collections import Counter
 import io
 import zipfile
 
@@ -25,7 +25,7 @@ def get_ai_response(prompt, user_input):
     )
     return response.choices[0].message.content
 
-def create_zip(key_points_df, quiz_df, pie_chart_img, wordcloud_img):
+def create_zip(key_points_df, quiz_df, pie_chart_img, histogram_img):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
         csv_keypoints = key_points_df.to_csv(index=False).encode('utf-8')
@@ -35,7 +35,7 @@ def create_zip(key_points_df, quiz_df, pie_chart_img, wordcloud_img):
         zip_file.writestr("2.quiz.csv", csv_quiz)
 
         zip_file.writestr("4.piechart.png", pie_chart_img)
-        zip_file.writestr("3.wordcloud.png", wordcloud_img)
+        zip_file.writestr("3.histogram.png", histogram_img)
 
     zip_buffer.seek(0)
     return zip_buffer.read()
@@ -59,7 +59,7 @@ This application helps you analyze and summarize text, making it easy to study k
 ### What the app does:
 1. **Summarizes text**: Provides a concise summary of any text, no matter the language.
 2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
-3. **Visualizes data**: Creates word clouds and pie charts to show important information at a glance.
+3. **Visualizes data**: Creates histograms to represent the frequency of key phrases.
 4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
 5. **Multilingual Input, English Output**: Input any text in any language (e.g., Thai, Japanese, Spanish, etc.), and the app will provide the output **in English**.
 
@@ -90,7 +90,7 @@ Step 1: Summarize the Text.
 - {detail_instructions}
 
 Step 2: Extract key points (provide key point and explanation).
-Step 3: Extract key phrases for word cloud.
+Step 3: Extract key phrases for histogram.
 Step 4: Provide data for pie chart based on key point importance.
 Step 5: Generate 10 quiz questions.
 
@@ -183,41 +183,28 @@ if st.button('Analyze') and user_input and client:
         pie_chart_img.seek(0)
 
         cleaned_key_phrases = clean_key_phrases(key_phrases, key_points_df)
-        wordcloud = WordCloud(width=800, height=400, background_color="white").generate(cleaned_key_phrases)
-        wordcloud_img = io.BytesIO()
-        wordcloud.to_image().save(wordcloud_img, format='PNG')
-        wordcloud_img.seek(0)
 
-        tab1, tab2 = st.tabs(["Word Cloud", "Pie Chart"])
+        phrase_counter = Counter(cleaned_key_phrases.split())
+        phrases, counts = zip(*phrase_counter.items())
 
-        with tab1:
-            st.markdown("## Word Cloud 🌥️")
-            st.markdown("""
-            The word cloud shows the most important words and phrases extracted from the text. The bigger the word, the more frequently it appears in the text. This gives you a quick visual of key themes.
-            """)
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.bar(phrases, counts)
+        ax.set_xlabel('Key Phrases')
+        ax.set_ylabel('Frequency')
+        ax.set_title('Frequency of Key Phrases')
 
-            if cleaned_key_phrases.strip():
-                wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="viridis").generate(cleaned_key_phrases)
-                plt.imshow(wordcloud, interpolation='bilinear')
-                plt.axis("off")
-                st.pyplot(plt.gcf())
-            else:
-                st.warning("No key phrases were extracted for the word cloud.")
+        histogram_img = io.BytesIO()
+        plt.xticks(rotation=45, ha='right')
+        plt.savefig(histogram_img, format='png')
+        histogram_img.seek(0)
 
-        with tab2:
-            st.markdown("## Pie Chart 📊")
-            st.markdown("""
-            The pie chart breaks down the relative importance of each key point based on how frequently it is mentioned or emphasized in the text.
-            """)
-            if not key_points_df.empty:
-                pie_labels = key_points_df['Key Points']
-                pie_sizes = [len(k) for k in key_points_df['Explanation']]
-                fig, ax = plt.subplots()
-                ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90)
-                ax.axis('equal')
-                st.pyplot(fig)
+        st.markdown("## Key Phrase Frequency Histogram 📊")
+        st.markdown("""
+        The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
+        """)
+        st.pyplot(fig)
 
-        zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), wordcloud_img.getvalue())
+        zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
         st.download_button(
             label="Download All (ZIP)",
