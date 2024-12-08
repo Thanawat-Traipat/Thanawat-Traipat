@@ -168,7 +168,7 @@ if st.button('Get Tutoring') and user_input and client:
 
         st.markdown("## Key Points 📌")
         st.markdown("""
-        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.(Double click on each cells for full text)
+        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying. (Double click on each cells for full text)
         """)
         st.dataframe(key_points_df)
 
@@ -176,7 +176,7 @@ if st.button('Get Tutoring') and user_input and client:
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("""
-        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams.
+        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams. (Double click on each cells for full text)
         """)
         st.dataframe(quiz_df)
 
