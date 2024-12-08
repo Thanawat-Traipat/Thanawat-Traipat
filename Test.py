@@ -44,6 +44,7 @@ def clean_key_phrases(key_phrases):
     phrase_counter = Counter({item['Phrase']: item['Frequency'] for item in key_phrases})
     return phrase_counter
 
+# App Information
 st.markdown("""
 # Private Tutor App 🎓
 
@@ -189,6 +190,7 @@ if st.button('Get Tutoring') and user_input and client:
         fig, ax = plt.subplots()
         ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.axis('equal')
+        plt.tight_layout()  # Fixes cropping issue
 
         pie_chart_img = io.BytesIO()
         plt.savefig(pie_chart_img, format='png')
@@ -203,15 +205,17 @@ if st.button('Get Tutoring') and user_input and client:
         ax.set_xlabel('Key Phrases')
         ax.set_ylabel('Frequency')
         ax.set_title('Frequency of Key Phrases')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()  # Fixes cropping issue
 
         histogram_img = io.BytesIO()
-        plt.xticks(rotation=45, ha='right')
         plt.savefig(histogram_img, format='png')
         histogram_img.seek(0)
 
+        # Data visualization tabs
         st.markdown("## Data Visualization 📊")
         st.markdown("""
-        The histograms and pie charts provide a visual summary of the text. Use them to see which key phrases appear most frequently and which key points are most emphasized.
+        The histogram and pie chart give you a visual overview of the material, helping you see which key phrases appear most frequently and which key points are most emphasized.
         """)
 
         tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Key Point Pie Chart"])
@@ -234,5 +238,3 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
-
