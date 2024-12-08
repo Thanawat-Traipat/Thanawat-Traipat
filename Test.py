@@ -52,7 +52,7 @@ Welcome to the Private Tutor App – your personal study assistant powered by AI
 ### How does it work?
 1. **Summarizes text**: Quickly condenses any text into a clear and concise summary.
 2. **Extracts key points**: Pulls out the main ideas and explains them in simple terms.
-3. **Visualizes data**: Generates a frequency histogram of key phrases and a pie chart to show the importance of each key point.
+3. **Visualizes data**: Generates frequency histograms of key phrases and pie charts to show key point distribution.
 4. **Creates quizzes**: Builds 10 quiz questions to help you test your understanding.
 5. **Multilingual Input, English Output**: You can input text in any language, and the app will process and provide output in English.
 """)
@@ -119,7 +119,6 @@ if st.button('Get Tutoring') and user_input and client:
         st.markdown("## Summary 📜")
         st.write(summary)
 
-        # Display key points DataFrame with increased row height and text wrapping
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
@@ -129,16 +128,8 @@ if st.button('Get Tutoring') and user_input and client:
         st.markdown("""
         The key points break down the text into digestible parts. Each point includes a brief explanation to help you understand the material better.
         """)
+        st.dataframe(key_points_df)
 
-        # Set table styles for better formatting
-        st.dataframe(key_points_df.style.set_properties(**{
-            'text-align': 'left',
-            'white-space': 'pre-wrap',  # Enables text wrapping
-        }).set_table_styles(
-            [{'selector': 'th', 'props': [('font-size', '16px')]}]  # Increases header font size
-        ))
-
-        # Display quiz questions
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
@@ -147,13 +138,11 @@ if st.button('Get Tutoring') and user_input and client:
         """)
         st.dataframe(quiz_df)
 
-        # Generate pie chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
         pie_sizes = [point['Percentage'] for point in pie_chart_data]
         fig, ax = plt.subplots()
         ax.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.axis('equal')
-        plt.tight_layout(pad=3.0, bbox_inches='tight')  # Fix cropping issue
 
         pie_chart_img = io.BytesIO()
         plt.savefig(pie_chart_img, format='png')
@@ -201,5 +190,3 @@ if st.button('Get Tutoring') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
-
-
