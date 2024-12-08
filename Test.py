@@ -41,44 +41,44 @@ def create_zip(key_points_df, quiz_df, pie_chart_img, histogram_img):
     return zip_buffer.read()
 
 def clean_key_phrases(key_phrases):
-    # Directly using key phrases with their frequencies as provided in the response
     phrase_counter = Counter({item['Phrase']: item['Frequency'] for item in key_phrases})
     return phrase_counter
 
 st.markdown("""
-# AI-Powered Study Assistant 🌟
+# Private Tutor App 🎓
 
-This application helps you analyze and summarize text, making it easy to study key points and prepare for exams.
+Welcome to the Private Tutor App – your personal study assistant powered by AI. This app helps you break down complex study material into manageable parts, with summaries, key points, visualizations, and quizzes to enhance your understanding.
 
-### What the app does:
-1. **Summarizes text**: Provides a concise summary of any text, no matter the language.
-2. **Extracts key points**: Highlights the main ideas and gives explanations for each, regardless of the input language.
-3. **Visualizes data**: Creates histograms to represent the frequency of key phrases and pie charts to show key point distribution.
-4. **Generates quizzes**: Automatically creates 10 quiz questions to test your understanding.
-5. **Multilingual Input, English Output**: Input any text in any language (e.g., Thai, Japanese, Spanish, etc.), and the app will provide the output **in English**.
+### How does it work?
+1. **Summarizes text**: Quickly condenses any text into a clear and concise summary.
+2. **Extracts key points**: Pulls out the main ideas and explains them in simple terms.
+3. **Visualizes data**: Generates a frequency histogram of key phrases and a pie chart to show the importance of each key point.
+4. **Creates quizzes**: Builds 10 quiz questions to help you test your understanding.
+5. **Multilingual Input, English Output**: You can input text in any language, and the app will process and provide output in English.
 
-Simply input your text, and the AI will do the rest!
+Simply input your text, and the AI will take care of the rest!
 """)
 
-st.markdown("## Text Input 📝")
-st.markdown("Input any text (e.g., study material, an article) that you want to analyze.")
-user_input = st.text_area("Enter your text for analysis:", "Your text here", height=250)
+st.markdown("## Input Your Study Material 📄")
+st.markdown("Enter any text you'd like your private tutor to help you with, whether it's an article, study notes, or a textbook excerpt.")
+
+user_input = st.text_area("Paste your text here for tutoring:", "Your text here", height=250)
 
 detail_level = st.selectbox(
-    "Choose the level of analysis detail:",
+    "Choose the level of tutoring detail:",
     options=["Basic Overview", "Detailed Overview", "Thorough Analysis"],
-    help="Select how much detail you want in the analysis."
+    help="Select how much detail you'd like the tutor to focus on."
 )
 
 if detail_level == "Basic Overview":
     detail_instructions = "provide a very brief summary with only the key information."
-    detail_instructions_2 = "provide the main keypoint and concise explanation"
+    detail_instructions_2 = "provide the main key point and concise explanation."
 elif detail_level == "Detailed Overview":
     detail_instructions = "provide a detailed summary with moderate depth and important concepts."
-    detail_instructions_2 = "provide several key point with detailed explanation with moderate depth and important concepts."
+    detail_instructions_2 = "provide several key points with detailed explanations covering key concepts."
 else:
     detail_instructions = "provide a thorough analysis with detailed explanations and insights."
-    detail_instructions_2 = "provide a thorough analysis with large number of key points and extremely detailed explanations and insights."
+    detail_instructions_2 = "provide an in-depth analysis with multiple key points and comprehensive explanations."
 
 prompt = f"""
 You are acting as a Private Tutor for the student. You will be given a text in any language, but you need to always respond in **English**. Complete the following tasks:
@@ -88,13 +88,12 @@ Step 1: Summarize the Text.
 
 Step 2: Extract key points (provide key point and explanation).
 - {detail_instructions_2}
-Step 3: Extract key phrases and count their frequency of appearance in the text for histogram.
+Step 3: Extract key phrases and count their frequency of appearance in the text for a histogram.
 - Return a list of key phrases with their corresponding frequency counts.
-Step 4: Provide data for pie chart based on key point importance.
-- Return a list of key points with their corresponding percentage count( how much percent they cover in the paragraph and how important they are)
-- Each key point is not equally important and representrd. you should not try to make the percentage equal. In fact, it is very unrealistic to do so
+Step 4: Provide data for a pie chart based on key point importance.
+- Return a list of key points with their corresponding percentage count (how much they cover in the paragraph and how important they are).
 Step 5: Generate 10 quiz questions.
-- Should be question that test the student knowledge from the text, to prepare for the exam.
+- The questions should test the student’s knowledge from the text, to prepare them for the exam.
 
 ### **Important Instructions**:
 1. **Complete all sections**: Every part of the response (summary, key points, key phrases with frequency, pie chart data, quiz questions) must be included. If a section cannot be generated, provide an empty object or an empty list to ensure the section is not omitted.
@@ -140,14 +139,13 @@ if not user_api_key:
     st.sidebar.warning("Please provide your OpenAI API key to start using AI features.")
 
 if not user_input:
-    st.warning("Please provide some text to analyze.")
+    st.warning("Please provide some text for tutoring.")
 
-if st.button('Analyze') and user_input and client:
-    with st.spinner("Analyzing text..."):
+if st.button('Get Tutoring') and user_input and client:
+    with st.spinner("Your private tutor is preparing..."):
         ai_response = get_ai_response(prompt, user_input)
 
     try:
-        # Ensure the response contains all required fields
         response_data = json.loads(ai_response)
 
         # Fallback data for missing sections
@@ -157,31 +155,35 @@ if st.button('Analyze') and user_input and client:
         pie_chart_data = response_data.get('Pie Chart Data', [{"Key Point": "No Key Points", "Percentage": 100}])
         quiz = response_data.get('Quiz', [{"Question": "What is this about?", "Answer": "Please refer to the summary.", "Explanation": "This is a general question."}])
 
-        st.markdown("## Summary of Text 📝")
+        # Display summary
+        st.markdown("## Summary 📜")
         st.markdown("""
-        The summary provides a brief, high-level overview of the text. Depending on the selected level of detail, the summary will include key points or provide more thorough explanations.
+        The summary provides a high-level overview of the text. It helps you quickly grasp the main idea and important concepts.
         """)
         st.write(summary)
 
+        # Display key points
         key_points_df = pd.DataFrame(key_points)
         key_points_df = key_points_df[['Key Point', 'Explanation']] 
         key_points_df.columns = ['Key Points', 'Explanation']
         key_points_df.index = key_points_df.index + 1
 
-        st.markdown("## Key Points 📌")
+        st.markdown("## Key Points 🔑")
         st.markdown("""
-        The key points highlight the most important ideas from the text, along with brief explanations for each point. This helps you focus on the essential concepts for studying.
+        The key points break down the text into digestible parts. Each point includes a brief explanation to help you understand the material better.
         """)
         st.dataframe(key_points_df)
 
+        # Display quiz questions
         quiz_df = pd.DataFrame(quiz)
         quiz_df.index = quiz_df.index + 1
         st.markdown("## Quiz Questions 📝")
         st.markdown("""
-        To test your understanding, the AI has generated 10 quiz questions based on the key points of the text. This section helps reinforce your learning and ensures you are prepared for exams.
+        To test your understanding, the app generates quiz questions based on the key points. Use these questions to review the material and ensure you're ready for the exam.
         """)
         st.dataframe(quiz_df)
 
+        # Generate pie chart
         pie_labels = [point['Key Point'] for point in pie_chart_data]
         pie_sizes = [point['Percentage'] for point in pie_chart_data]
         fig, ax = plt.subplots()
@@ -207,12 +209,12 @@ if st.button('Analyze') and user_input and client:
         plt.savefig(histogram_img, format='png')
         histogram_img.seek(0)
 
-        st.markdown("## Key Phrase Frequency Histogram 📊")
+        st.markdown("## Data Visualization 📊")
         st.markdown("""
-        The histogram displays the frequency of the key phrases extracted from the text. The higher the bar, the more frequently that key phrase appears.
+        The histograms and pie charts provide a visual summary of the text. Use them to see which key phrases appear most frequently and which key points are most emphasized.
         """)
 
-        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Pie Chart"])
+        tab1, tab2 = st.tabs(["Key Phrase Frequency Histogram", "Key Point Pie Chart"])
 
         with tab1:
             st.image(histogram_img)
@@ -220,10 +222,11 @@ if st.button('Analyze') and user_input and client:
         with tab2:
             st.image(pie_chart_img)
 
+        # Create zip file for download
         zip_file = create_zip(key_points_df, quiz_df, pie_chart_img.getvalue(), histogram_img.getvalue())
         st.markdown("---")
         st.download_button(
-            label="Download All (ZIP)",
+            label="Download All Results (ZIP)",
             data=zip_file,
             file_name="PrivateTutorApp_output.zip",
             mime="application/zip"
@@ -231,4 +234,5 @@ if st.button('Analyze') and user_input and client:
 
     except json.JSONDecodeError:
         st.error("Failed to parse the AI response into JSON. Please ensure the response follows the expected structure.")
+
 
