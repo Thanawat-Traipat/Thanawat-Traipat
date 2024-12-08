@@ -183,8 +183,8 @@ if st.button('Analyze') and user_input and client:
         plt.savefig(pie_chart_img, format='png')
         pie_chart_img.seek(0)
 
+        # Create Key Phrase Histogram
         cleaned_key_phrases = clean_key_phrases(key_phrases, key_points_df)
-
         phrase_counter = Counter(cleaned_key_phrases.split())
         phrases, counts = zip(*phrase_counter.items())
 
